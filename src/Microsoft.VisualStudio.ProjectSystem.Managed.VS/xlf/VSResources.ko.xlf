@@ -52,6 +52,26 @@
         <target state="translated">{0} - 대상 파일에서 가져옵니다. 이 가져오기는 제거할 수 없습니다.</target>
         <note />
       </trans-unit>
+      <trans-unit id="InstallTargetingPackCommandTitle">
+        <source>Install Targeting Pack...</source>
+        <target state="new">Install Targeting Pack...</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="InstallTargetingPackDisplayName">
+        <source>Install Targeting Pack</source>
+        <target state="new">Install Targeting Pack</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="InstallTargetingPackUnloadDescription">
+        <source>This project targets a version of .NET Framework for which there is no targeting pack installed.</source>
+        <target state="new">This project targets a version of .NET Framework for which there is no targeting pack installed.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="InstallTargetingPackUnloadReason">
+        <source>Targeting pack missing</source>
+        <target state="new">Targeting pack missing</target>
+        <note />
+      </trans-unit>
       <trans-unit id="RenameSymbolFailed">
         <source>Renaming the code element '{0}' failed.</source>
         <target state="translated">코드 포인트 '{0}'의 이름을 바꾸지 못했습니다.</target>

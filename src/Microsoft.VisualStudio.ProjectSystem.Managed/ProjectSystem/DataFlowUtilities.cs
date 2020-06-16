@@ -469,6 +469,57 @@ namespace Microsoft.VisualStudio.ProjectSystem
         }
 
         /// <summary>
+        ///     Creates a source block that produces a transformed value for each value from original source block, 
+        ///     skipping intermediate input and output states, and hence is not suitable for producing or consuming 
+        ///     deltas.
+        /// </summary>
+        /// <typeparam name="TOut">
+        ///     The type of value produced by <paramref name="transform"/>.
+        ///  </typeparam>
+        /// <param name="source">
+        ///     The source block whose values are to be transformed.
+        /// </param>
+        /// <param name="transform">
+        ///     The function to execute on each value from <paramref name="source"/>.
+        /// </param>
+        /// <param name="suppressVersionOnlyUpdates">
+        ///     A value indicating whether to prevent messages from propagating to the target
+        ///     block if no project changes are include other than an incremented version number.
+        /// </param>
+        /// <param name="ruleNames">
+        ///     The names of the rules that describe the project data the caller is interested in.
+        /// </param>
+        /// <returns>
+        ///     The transformed source block and a disposable value that terminates the link.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="source"/> is <see langword="null"/>.
+        ///     <para>
+        ///         -or-
+        ///     </para>
+        ///     <paramref name="transform"/> is <see langword="null"/>.
+        /// </exception>
+        public static DisposableValue<ISourceBlock<TOut>> TransformWithNoDelta<TOut>(
+            this ISourceBlock<IProjectVersionedValue<IProjectSubscriptionUpdate>> source,
+            Func<IProjectVersionedValue<IProjectSubscriptionUpdate>, Task<TOut>> transform,
+            bool suppressVersionOnlyUpdates,
+            IEnumerable<string>? ruleNames = null)
+        {
+            Requires.NotNull(source, nameof(source));
+            Requires.NotNull(transform, nameof(transform));
+
+            IPropagatorBlock<IProjectVersionedValue<IProjectSubscriptionUpdate>, TOut> transformBlock = DataflowBlockSlim.CreateTransformBlock(transform, skipIntermediateInputData: true, skipIntermediateOutputData: true);
+
+            IDisposable link = source.LinkTo(transformBlock,
+                                             DataflowOption.PropagateCompletion,
+                                             initialDataAsNew: true,
+                                             suppressVersionOnlyUpdates: suppressVersionOnlyUpdates,
+                                             ruleNames: ruleNames);
+
+            return new DisposableValue<ISourceBlock<TOut>>(transformBlock, link);
+        }
+
+        /// <summary>
         /// Wraps a delegate in a repeatably executable delegate that runs within an ExecutionContext captured at the time of *this* method call.
         /// </summary>
         /// <typeparam name="TInput">The type of input parameter that is taken by the delegate.</typeparam>

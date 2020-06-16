@@ -5,73 +5,26 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Globalization;
 using System.Linq;
-using System.Threading.Tasks.Dataflow;
-using Microsoft.VisualStudio.ProjectSystem.Utilities;
 using NuGet.SolutionRestoreManager;
-using RestoreInfo = Microsoft.VisualStudio.ProjectSystem.IProjectVersionedValue<Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore.PackageRestoreUnconfiguredInput>;
 
 namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 {
     [Export(typeof(IPackageRestoreUnconfiguredInputDataSource))]
     [AppliesTo(ProjectCapability.PackageReferences)]
-    internal partial class PackageRestoreUnconfiguredInputDataSource : ChainedProjectValueDataSourceBase<PackageRestoreUnconfiguredInput>, IPackageRestoreUnconfiguredInputDataSource
+    internal partial class PackageRestoreUnconfiguredInputDataSource : ConfiguredToUnconfiguredChainedDataSourceBase<PackageRestoreConfiguredInput, PackageRestoreUnconfiguredInput>, IPackageRestoreUnconfiguredInputDataSource
     {
-        private readonly UnconfiguredProject _project;
-        private readonly IActiveConfigurationGroupService _activeConfigurationGroupService;
-
         [ImportingConstructor]
         public PackageRestoreUnconfiguredInputDataSource(UnconfiguredProject project, IActiveConfigurationGroupService activeConfigurationGroupService)
-            : base(project, synchronousDisposal: true, registerDataSource: false)
+            : base(project, activeConfigurationGroupService)
         {
-            _project = project;
-            _activeConfigurationGroupService = activeConfigurationGroupService;
         }
 
-        protected override UnconfiguredProject ContainingProject
+        protected override IProjectValueDataSource<PackageRestoreConfiguredInput>? GetInputDataSource(ConfiguredProject configuredProject)
         {
-            get { return _project; }
+            return configuredProject.Services.ExportProvider.GetExportedValueOrDefault<IPackageRestoreConfiguredInputDataSource>();
         }
 
-        protected override IDisposable LinkExternalInput(ITargetBlock<RestoreInfo> targetBlock)
-        {
-            // At a high-level, we want to combine all implicitly active configurations (ie the active config of each TFM) restore data
-            // (via ProjectRestoreUpdate) and combine it into a single IVsProjectRestoreInfo2 instance and publish that. When a change is 
-            // made to a configuration, such as adding a PackageReference, we should react to it and push a new version of our output. If the 
-            // active configuration changes, we should react to it, and publish data from the new set of implicitly active configurations.
-            var disposables = new DisposableBag();
-
-            var restoreConfiguredInputSource = new UnwrapCollectionChainedProjectValueDataSource<IReadOnlyCollection<ConfiguredProject>, PackageRestoreConfiguredInput>(
-                _project,
-                projects => projects.Select(project => project.Services.ExportProvider.GetExportedValueOrDefault<IPackageRestoreConfiguredInputDataSource>())
-                                    .WhereNotNull() // Filter out those without PackageReference
-                                    .Select(DropConfiguredProjectVersions),
-                includeSourceVersions: true);
-
-            disposables.Add(restoreConfiguredInputSource);
-
-            IProjectValueDataSource<IConfigurationGroup<ConfiguredProject>> activeConfiguredProjectsSource = _activeConfigurationGroupService.ActiveConfiguredProjectGroupSource;
-            disposables.Add(activeConfiguredProjectsSource.SourceBlock.LinkTo(restoreConfiguredInputSource, DataflowOption.PropagateCompletion));
-
-            // Dataflow from two configurations can depend on a same unconfigured level data source, and processes it at a different speed.
-            // Introduce a forward-only block to prevent regressions in versions.
-            var forwardOnlyBlock = ProjectDataSources.CreateDataSourceVersionForwardOnlyFilteringBlock<IReadOnlyCollection<PackageRestoreConfiguredInput>>();
-            disposables.Add(restoreConfiguredInputSource.SourceBlock.LinkTo(forwardOnlyBlock, DataflowOption.PropagateCompletion));
-
-            // Transform all restore data -> combined restore data
-            DisposableValue<ISourceBlock<RestoreInfo>> mergeBlock = forwardOnlyBlock.TransformWithNoDelta(update => update.Derive(MergeRestoreInputs));
-            disposables.Add(mergeBlock);
-
-            // Set the link up so that we publish changes to target block
-            mergeBlock.Value.LinkTo(targetBlock, DataflowOption.PropagateCompletion);
-
-            // Join the source blocks, so if they need to switch to UI thread to complete 
-            // and someone is blocked on us on the same thread, the call proceeds
-            JoinUpstreamDataSources(restoreConfiguredInputSource, activeConfiguredProjectsSource);
-
-            return disposables;
-        }
-
-        private PackageRestoreUnconfiguredInput MergeRestoreInputs(IReadOnlyCollection<PackageRestoreConfiguredInput> inputs)
+        protected override PackageRestoreUnconfiguredInput ConvertInputData(IReadOnlyCollection<PackageRestoreConfiguredInput> inputs)
         {
             // If there are no updates, we have no active configurations
             ProjectRestoreInfo? restoreInfo = null;
@@ -186,8 +139,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 if (!RestoreComparer.ReferenceItems.Equals(existingReference, reference))
                 {
                     ReportUserFault(string.Format(
-                        CultureInfo.CurrentCulture, 
-                        VSResources.Restore_DuplicateToolReferenceItems, 
+                        CultureInfo.CurrentCulture,
+                        VSResources.Restore_DuplicateToolReferenceItems,
                         existingReference.Name));
                 }
 
@@ -202,21 +155,14 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             if (framework.TargetFrameworkMoniker.Length == 0)
             {
                 ReportUserFault(string.Format(
-                    CultureInfo.CurrentCulture, 
-                    VSResources.Restore_EmptyTargetFrameworkMoniker, 
+                    CultureInfo.CurrentCulture,
+                    VSResources.Restore_EmptyTargetFrameworkMoniker,
                     projectConfiguration.Name));
 
                 return false;
             }
 
             return true;
-        }
-
-        private IProjectValueDataSource<PackageRestoreConfiguredInput> DropConfiguredProjectVersions(IPackageRestoreConfiguredInputDataSource dataSource)
-        {
-            // Wrap it in a data source that will drop project version and identity versions so as they will never agree
-            // on these versions as they are unique to each configuration. They'll be consistent by all other versions.
-            return new DropConfiguredProjectVersionDataSource<PackageRestoreConfiguredInput>(_project, dataSource);
         }
 
         private void ReportUserFault(string message)

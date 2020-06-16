@@ -1,4 +1,6 @@
 Microsoft.VisualStudio.ProjectSystem.Properties.IInterceptingPropertyValueProviderMetadata.PropertyNames.get -> string![]!
+Microsoft.VisualStudio.ProjectSystem.ConfiguredToUnconfiguredChainedDataSourceBase<TInput, TOutput>
+Microsoft.VisualStudio.ProjectSystem.ConfiguredToUnconfiguredChainedDataSourceBase<TInput, TOutput>.ConfiguredToUnconfiguredChainedDataSourceBase(Microsoft.VisualStudio.ProjectSystem.UnconfiguredProject! project, Microsoft.VisualStudio.ProjectSystem.IActiveConfigurationGroupService! activeConfigurationGroupService) -> void
 Microsoft.VisualStudio.ProjectSystem.VS.Extensibility.IProjectExportProvider
 Microsoft.VisualStudio.ProjectSystem.VS.Extensibility.IProjectExportProvider.GetExport<T>(string! projectFilePath) -> T?
 Microsoft.VisualStudio.ProjectSystem.VS.ManagedImageMonikers
@@ -39,10 +41,14 @@ Microsoft.VisualStudio.ProjectSystem.VS.Tree.Dependencies.IProjectDependenciesSu
 Microsoft.VisualStudio.ProjectSystem.VS.Tree.Dependencies.IProjectDependenciesSubTreeProvider.CreateRootDependencyNode() -> Microsoft.VisualStudio.ProjectSystem.VS.Tree.Dependencies.IDependencyModel!
 Microsoft.VisualStudio.ProjectSystem.VS.Tree.Dependencies.IProjectDependenciesSubTreeProvider.DependenciesChanged -> System.EventHandler<Microsoft.VisualStudio.ProjectSystem.VS.Tree.Dependencies.DependenciesChangedEventArgs!>!
 Microsoft.VisualStudio.ProjectSystem.VS.Tree.Dependencies.IProjectDependenciesSubTreeProvider.ProviderType.get -> string!
+abstract Microsoft.VisualStudio.ProjectSystem.ConfiguredToUnconfiguredChainedDataSourceBase<TInput, TOutput>.ConvertInputData(System.Collections.Generic.IReadOnlyCollection<TInput!>! inputs) -> TOutput!
+abstract Microsoft.VisualStudio.ProjectSystem.ConfiguredToUnconfiguredChainedDataSourceBase<TInput, TOutput>.GetInputDataSource(Microsoft.VisualStudio.ProjectSystem.ConfiguredProject! configuredProject) -> Microsoft.VisualStudio.ProjectSystem.IProjectValueDataSource<TInput!>?
 const Microsoft.VisualStudio.ProjectSystem.Debug.UIProfilePropertyName.NativeDebugging = "NativeDebugging" -> string!
 const Microsoft.VisualStudio.ProjectSystem.Debug.UIProfilePropertyName.RemoteDebug = "RemoteDebug" -> string!
 const Microsoft.VisualStudio.ProjectSystem.Debug.UIProfilePropertyName.SqlDebugging = "SQLDebugging" -> string!
 static Microsoft.VisualStudio.ProjectSystem.VS.ManagedImageMonikers.Application.get -> Microsoft.VisualStudio.Imaging.Interop.ImageMoniker
+override Microsoft.VisualStudio.ProjectSystem.ConfiguredToUnconfiguredChainedDataSourceBase<TInput, TOutput>.ContainingProject.get -> Microsoft.VisualStudio.ProjectSystem.UnconfiguredProject!
+override sealed Microsoft.VisualStudio.ProjectSystem.ConfiguredToUnconfiguredChainedDataSourceBase<TInput, TOutput>.LinkExternalInput(System.Threading.Tasks.Dataflow.ITargetBlock<Microsoft.VisualStudio.ProjectSystem.IProjectVersionedValue<TOutput!>!>! targetBlock) -> System.IDisposable!
 static Microsoft.VisualStudio.ProjectSystem.VS.ManagedImageMonikers.ApplicationPrivate.get -> Microsoft.VisualStudio.Imaging.Interop.ImageMoniker
 static Microsoft.VisualStudio.ProjectSystem.VS.ManagedImageMonikers.ApplicationWarning.get -> Microsoft.VisualStudio.Imaging.Interop.ImageMoniker
 static Microsoft.VisualStudio.ProjectSystem.VS.ManagedImageMonikers.CodeInformation.get -> Microsoft.VisualStudio.Imaging.Interop.ImageMoniker

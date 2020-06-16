@@ -245,4 +245,16 @@ In order to debug this project, add an executable project to this solution which
   <data name="FrameworkAssemblyFileVersionDescription" xml:space="preserve">
     <value>The file version of the framework assembly.</value>
   </data>
+  <data name="InstallTargetingPackCommandTitle" xml:space="preserve">
+    <value>Install Targeting Pack...</value>
+  </data>
+  <data name="InstallTargetingPackDisplayName" xml:space="preserve">
+    <value>Install Targeting Pack</value>
+  </data>
+  <data name="InstallTargetingPackUnloadDescription" xml:space="preserve">
+    <value>This project targets a version of .NET Framework for which there is no targeting pack installed.</value>
+  </data>
+  <data name="InstallTargetingPackUnloadReason" xml:space="preserve">
+    <value>Targeting pack missing</value>
+  </data>
 </root>

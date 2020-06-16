@@ -52,6 +52,26 @@
         <target state="translated">{0}: la importación procede del archivo de destino. Esta importación no se puede quitar.</target>
         <note />
       </trans-unit>
+      <trans-unit id="InstallTargetingPackCommandTitle">
+        <source>Install Targeting Pack...</source>
+        <target state="new">Install Targeting Pack...</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="InstallTargetingPackDisplayName">
+        <source>Install Targeting Pack</source>
+        <target state="new">Install Targeting Pack</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="InstallTargetingPackUnloadDescription">
+        <source>This project targets a version of .NET Framework for which there is no targeting pack installed.</source>
+        <target state="new">This project targets a version of .NET Framework for which there is no targeting pack installed.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="InstallTargetingPackUnloadReason">
+        <source>Targeting pack missing</source>
+        <target state="new">Targeting pack missing</target>
+        <note />
+      </trans-unit>
       <trans-unit id="RenameSymbolFailed">
         <source>Renaming the code element '{0}' failed.</source>
         <target state="translated">No se pudo cambiar el nombre del elemento de código '{0}'.</target>

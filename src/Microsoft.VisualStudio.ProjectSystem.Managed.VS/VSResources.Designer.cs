@@ -232,6 +232,42 @@ namespace Microsoft.VisualStudio {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Install Targeting Pack....
+        /// </summary>
+        internal static string InstallTargetingPackCommandTitle {
+            get {
+                return ResourceManager.GetString("InstallTargetingPackCommandTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Install Targeting Pack.
+        /// </summary>
+        internal static string InstallTargetingPackDisplayName {
+            get {
+                return ResourceManager.GetString("InstallTargetingPackDisplayName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This project targets a version of .NET Framework for which there is no targeting pack installed..
+        /// </summary>
+        internal static string InstallTargetingPackUnloadDescription {
+            get {
+                return ResourceManager.GetString("InstallTargetingPackUnloadDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Targeting pack missing.
+        /// </summary>
+        internal static string InstallTargetingPackUnloadReason {
+            get {
+                return ResourceManager.GetString("InstallTargetingPackUnloadReason", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Learn more.
         /// </summary>
         internal static string LearnMore {
