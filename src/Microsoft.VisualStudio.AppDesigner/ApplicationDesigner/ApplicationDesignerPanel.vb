@@ -2,7 +2,7 @@
 
 Imports System.Runtime.InteropServices
 Imports System.Windows.Forms
-
+Imports Microsoft.Internal.VisualStudio.Shell
 Imports Microsoft.VisualStudio.Editors.AppDesInterop
 Imports Microsoft.VisualStudio.Shell.Interop
 
@@ -73,6 +73,7 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
 
         'True while in the process of creating the designer
         Private _creatingDesigner As Boolean
+        Private _designerCreated As Boolean
 
         'The owning project designer
         Private ReadOnly _view As ApplicationDesignerView
@@ -94,7 +95,12 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
             Debug.Assert(View IsNot Nothing)
             _view = View
 
-            _editorGuid = GetType(PropPageDesigner.PropPageDesignerEditorFactory).GUID
+            If PropertyPageInfo.DeferUntilIntellisenseIsReady Then
+                _editorGuid = GetType(PropPageDesigner.DeferredPropPageDesignerEditorFactory).GUID
+            Else
+                _editorGuid = GetType(PropPageDesigner.PropPageDesignerEditorFactory).GUID
+            End If
+
         End Sub
 
 
@@ -137,7 +143,8 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
         Public ReadOnly Property IsPropertyPage As Boolean
             Get
                 Dim ReturnValue As Boolean = _propertyPageInfo IsNot Nothing
-                Debug.Assert(Not ReturnValue OrElse EditorGuid.Equals(GetType(PropPageDesigner.PropPageDesignerEditorFactory).GUID),
+                Debug.Assert(Not ReturnValue OrElse EditorGuid.Equals(GetType(PropPageDesigner.PropPageDesignerEditorFactory).GUID) _
+                                             OrElse EditorGuid.Equals(GetType(PropPageDesigner.DeferredPropPageDesignerEditorFactory).GUID),
                     "If it's a property page, the EditorGuid should be the PropPageDesigner's guid")
                 Return _propertyPageInfo IsNot Nothing
             End Get
@@ -158,6 +165,12 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
         Public ReadOnly Property DocCookie As UInteger
             Get
                 Return _docCookie
+            End Get
+        End Property
+
+        Friend ReadOnly Property DesignerCreated As Boolean
+            Get
+                Return _designerCreated
             End Get
         End Property
 
@@ -246,6 +259,8 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
                 Exit Sub
             End If
 
+            _designerCreated = True
+
             Using New Common.WaitCursor()
                 Common.Switches.TracePDPerfBegin("CreateDesigner")
                 Common.Switches.TracePDFocus(TraceLevel.Warning, "CreateDesigner() on panel """ & TabAutomationName & "/" & TabTitle & """")
@@ -283,6 +298,7 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
                                 ExistingDocDataPtr = Marshal.GetIUnknownForObject(rdtInfo.DocData)
                             End If
                         End If
+
                         OleServiceProvider = CType(_serviceProvider.GetService(GetType(OLE.Interop.IServiceProvider)), OLE.Interop.IServiceProvider)
                         Debug.Assert(OleServiceProvider IsNot Nothing, "Unable to get OleServiceProvider")
 
@@ -409,58 +425,23 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
                                 Marshal.Release(ExistingDocDataPtr)
                             End If
 
-                            'Add the Document Cookie to our list
-                            Dim CookieObj As Object = Nothing
-                            Dim EditorCaptionObject As Object = Nothing
                             Dim DocViewObject As Object = Nothing
-
-                            VSErrorHandler.ThrowOnFailure(WindowFrame.GetProperty(__VSFPROPID.VSFPROPID_DocData, _docData))
-                            VSErrorHandler.ThrowOnFailure(WindowFrame.GetProperty(__VSFPROPID.VSFPROPID_DocCookie, CookieObj))
-                            _docCookie = Common.NoOverflowCUInt(CookieObj)
-
                             VSErrorHandler.ThrowOnFailure(WindowFrame.GetProperty(__VSFPROPID.VSFPROPID_DocView, DocViewObject))
 
-                            'Get the DocView for those we can
-                            Dim DesignerWindowPane As Shell.Design.DesignerWindowPane
-                            DesignerWindowPane = TryCast(DocViewObject, Shell.Design.DesignerWindowPane)
-                            If DesignerWindowPane IsNot Nothing Then
-                                Dim WindowPaneControl As Control = TryCast(DesignerWindowPane.Window, Control)
-                                If WindowPaneControl IsNot Nothing Then
-                                    _docView = DirectCast(WindowPaneControl, Control).Controls(0)
-                                End If
+                            ' If the DocView is a replacable pane then its the Partial Load Mode "wait for intellisense" pane, so we hook up to when that is ready
+                            Dim replacablePane As IReplaceablePane = TryCast(DocViewObject, IReplaceablePane)
+                            If replacablePane IsNot Nothing Then
+                                AddHandler replacablePane.ReplacementAvailable, AddressOf PaneReplaced
+                            Else
+                                InitializePane(DocViewObject, WindowFrame)
                             End If
 
                             'Get the editor caption to use as the tab text
+                            Dim EditorCaptionObject As Object = Nothing
                             VSErrorHandler.ThrowOnFailure(WindowFrame.GetProperty(__VSFPROPID.VSFPROPID_EditorCaption, EditorCaptionObject))
                             Dim captionObject = TryCast(EditorCaptionObject, String)
                             If captionObject IsNot Nothing Then
                                 EditorCaption = captionObject
-                            End If
-
-                            If _propertyPageInfo IsNot Nothing AndAlso _propertyPageInfo.Site IsNot Nothing Then
-                                'Set up the service provider for the property page site.
-                                'The service provider that we want comes from the PropPageDesignerView
-                                '  (the DocView), so that property pages querying services receive
-                                '  the inner window frame, etc., rather than getting services from
-                                '  the outer window frame (the application designer).
-                                Debug.Assert(_propertyPageInfo.Site.BackingServiceProvider Is Nothing, "Service provider in property page site set twice")
-                                Debug.Assert(_docView IsNot Nothing AndAlso TypeOf _docView Is PropPageDesigner.PropPageDesignerView _
-                                    AndAlso TypeOf _docView Is IServiceProvider)
-                                _propertyPageInfo.Site.BackingServiceProvider = TryCast(_docView, IServiceProvider)
-
-#If DEBUG Then
-                                'Verify that property pages can get to native services such as IVsWindowFrame
-                                '  (needed to hook up help) through the service provider in the property page
-                                '  site.
-                                Dim spOLE As OLE.Interop.IServiceProvider = TryCast(_propertyPageInfo.Site, OLE.Interop.IServiceProvider)
-                                If spOLE IsNot Nothing Then
-                                    Dim sp As New Shell.ServiceProvider(spOLE)
-                                    Dim iwf As IVsWindowFrame = TryCast(sp.GetService(GetType(IVsWindowFrame)), IVsWindowFrame)
-                                    Debug.Assert(iwf IsNot Nothing AndAlso iwf Is WindowFrame,
-                                        "Unable to access the correct IVsWindowFrame for a property page through its property page site via " _
-                                            & "native IServiceProvider")
-                                End If
-#End If
                             End If
 
                             'Make the window frame visible
@@ -483,6 +464,62 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
                     _creatingDesigner = False
                 End Try
             End Using
+        End Sub
+
+        Private Sub InitializePane(docViewObject As Object, windowFrame As IVsWindowFrame)
+
+            'Add the Document Cookie to our list
+            Dim CookieObj As Object = Nothing
+
+            VSErrorHandler.ThrowOnFailure(windowFrame.GetProperty(__VSFPROPID.VSFPROPID_DocData, _docData))
+            VSErrorHandler.ThrowOnFailure(windowFrame.GetProperty(__VSFPROPID.VSFPROPID_DocCookie, CookieObj))
+            _docCookie = Common.NoOverflowCUInt(CookieObj)
+
+            'Get the DocView for those we can
+            Dim DesignerWindowPane As Shell.Design.DesignerWindowPane
+            DesignerWindowPane = TryCast(docViewObject, Shell.Design.DesignerWindowPane)
+            If DesignerWindowPane IsNot Nothing Then
+                Dim WindowPaneControl As Control = TryCast(DesignerWindowPane.Window, Control)
+                If WindowPaneControl IsNot Nothing Then
+                    _docView = DirectCast(WindowPaneControl, Control).Controls(0)
+                End If
+            End If
+
+            If _propertyPageInfo IsNot Nothing AndAlso _propertyPageInfo.Site IsNot Nothing Then
+                'Set up the service provider for the property page site.
+                'The service provider that we want comes from the PropPageDesignerView
+                '  (the DocView), so that property pages querying services receive
+                '  the inner window frame, etc., rather than getting services from
+                '  the outer window frame (the application designer).
+                Debug.Assert(_propertyPageInfo.Site.BackingServiceProvider Is Nothing, "Service provider in property page site set twice")
+                Debug.Assert(_docView IsNot Nothing AndAlso TypeOf _docView Is PropPageDesigner.PropPageDesignerView _
+                    AndAlso TypeOf _docView Is IServiceProvider)
+                _propertyPageInfo.Site.BackingServiceProvider = TryCast(_docView, IServiceProvider)
+
+#If DEBUG Then
+                'Verify that property pages can get to native services such as IVsWindowFrame
+                '  (needed to hook up help) through the service provider in the property page
+                '  site.
+                Dim spOLE As OLE.Interop.IServiceProvider = TryCast(_propertyPageInfo.Site, OLE.Interop.IServiceProvider)
+                If spOLE IsNot Nothing Then
+                    Dim sp As New Shell.ServiceProvider(spOLE)
+                    Dim iwf As IVsWindowFrame = TryCast(sp.GetService(GetType(IVsWindowFrame)), IVsWindowFrame)
+                    Debug.Assert(iwf IsNot Nothing AndAlso iwf Is windowFrame,
+                        "Unable to access the correct IVsWindowFrame for a property page through its property page site via " _
+                            & "native IServiceProvider")
+                End If
+#End If
+            End If
+        End Sub
+
+        Private Sub PaneReplaced(sender As Object, e As ReplacementEventArgs)
+
+            RemoveHandler e.OriginalPane.ReplacementAvailable, AddressOf PaneReplaced
+
+            InitializePane(e.ReplacementPane, VsWindowFrame)
+
+            _view.ReactivateCurrentTab()
+
         End Sub
 
         Protected Overridable Sub ShowWindowFrame()

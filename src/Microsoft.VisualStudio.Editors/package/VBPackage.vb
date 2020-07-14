@@ -37,6 +37,7 @@ Namespace Microsoft.VisualStudio.Editors
     ProvideEditorFactory(GetType(ApplicationDesigner.ApplicationDesignerEditorFactory), 1300, True, TrustLevel:=__VSEDITORTRUSTLEVEL.ETL_AlwaysTrusted),
     ProvideEditorFactory(GetType(SettingsDesigner.SettingsDesignerEditorFactory), 1200, True, TrustLevel:=__VSEDITORTRUSTLEVEL.ETL_AlwaysTrusted, CommonPhysicalViewAttributes:=3),
     ProvideEditorFactory(GetType(PropPageDesigner.PropPageDesignerEditorFactory), 1400, False, TrustLevel:=__VSEDITORTRUSTLEVEL.ETL_AlwaysTrusted),
+    ProvideEditorFactory(GetType(PropPageDesigner.DeferredPropPageDesignerEditorFactory), 1400, True, TrustLevel:=__VSEDITORTRUSTLEVEL.ETL_AlwaysTrusted),
     ProvideEditorFactory(GetType(ResourceEditor.ResourceEditorFactory), 1100, True, TrustLevel:=__VSEDITORTRUSTLEVEL.ETL_AlwaysTrusted, CommonPhysicalViewAttributes:=3),
     ProvideService(GetType(ResourceEditor.ResourceEditorRefactorNotify), ServiceName:="ResX RefactorNotify Service"),
     ProvideService(GetType(AddImports.IVBAddImportsDialogService), ServiceName:="Add Imports Dialog Service"),
@@ -105,6 +106,11 @@ Namespace Microsoft.VisualStudio.Editors
             End Try
             Try
                 RegisterEditorFactory(New PropPageDesigner.PropPageDesignerEditorFactory)
+            Catch ex As Exception When Common.ReportWithoutCrash(ex, "Exception registering property page designer editor factory", NameOf(VBPackage))
+                Throw
+            End Try
+            Try
+                RegisterEditorFactory(New PropPageDesigner.DeferredPropPageDesignerEditorFactory)
             Catch ex As Exception When Common.ReportWithoutCrash(ex, "Exception registering property page designer editor factory", NameOf(VBPackage))
                 Throw
             End Try

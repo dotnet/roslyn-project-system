@@ -319,6 +319,27 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
             End Set
         End Property
 
+        Friend ReadOnly Property DeferUntilIntellisenseIsReady As Boolean
+            Get
+                Dim KeyPath As String = _parentView.DTEProject.DTE.RegistryRoot & "\PropertyPages\" & _guid.ToString("B")
+                Dim Key As Win32.RegistryKey = Nothing
+                Try
+                    Key = Win32.Registry.LocalMachine.OpenSubKey(KeyPath)
+                    If Key IsNot Nothing Then
+                        Dim ValueObject As Object = Key.GetValue(NameOf(DeferUntilIntellisenseIsReady))
+                        Dim ValueBoolean = CBool(ValueObject)
+                        Return ValueBoolean
+                    End If
+                Catch ex As Exception When Common.ReportWithoutCrash(ex, NameOf(DeferUntilIntellisenseIsReady), NameOf(PropertyPageInfo))
+                Finally
+                    If Key IsNot Nothing Then
+                        Key.Close()
+                    End If
+                End Try
+
+                Return False
+            End Get
+        End Property
     End Class
 
 End Namespace

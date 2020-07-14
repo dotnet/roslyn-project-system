@@ -1,1 +1,7 @@
+Microsoft.VisualStudio.Editors.PropPageDesigner.DeferredPropPageDesignerEditorFactory
+Microsoft.VisualStudio.Editors.PropPageDesigner.DeferredPropPageDesignerEditorFactory.CreateDocData(grfCreate As UInteger, pszMkDocument As String, pHier As Microsoft.VisualStudio.Shell.Interop.IVsHierarchy, itemid As UInteger) -> Object
+Microsoft.VisualStudio.Editors.PropPageDesigner.DeferredPropPageDesignerEditorFactory.CreateDocView(grfCreate As UInteger, pszPhysicalView As String, punkDocData As System.IntPtr, itemid As UInteger, ByRef pbstrEditorCaption As String, ByRef pguidCmdUI As System.Guid, ByRef pgrfCDW As Integer) -> Object
+Microsoft.VisualStudio.Editors.PropPageDesigner.DeferredPropPageDesignerEditorFactory.New() -> Void
+Microsoft.VisualStudio.Editors.PropPageDesigner.PropPageDesignerEditorFactory.GetDocData() -> Object
+Microsoft.VisualStudio.Editors.PropPageDesigner.PropPageDesignerEditorFactory.GetDocView(fileName As String) -> Object
 Microsoft.VisualStudio.Editors.PropertyPages.HiddenIfMissingPropertyControlData.New(id As Integer, name As String, formControl As System.Windows.Forms.Control, setter As Microsoft.VisualStudio.Editors.PropertyPages.PropertyControlData.SetDelegate, getter As Microsoft.VisualStudio.Editors.PropertyPages.PropertyControlData.GetDelegate, flags As Microsoft.VisualStudio.Editors.PropertyPages.ControlDataFlags, assocControls As System.Windows.Forms.Control()) -> Void

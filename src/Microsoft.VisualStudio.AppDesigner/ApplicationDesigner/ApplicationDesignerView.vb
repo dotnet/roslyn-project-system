@@ -978,6 +978,9 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
             Return True
         End Function
 
+        Friend Sub ReactivateCurrentTab()
+            ShowTab(_activePanelIndex, ForceShow:=True, ForceActivate:=True)
+        End Sub
 
         ''' <summary>
         ''' Show the requested tab
@@ -1049,7 +1052,7 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
                                 ElseIf .PropertyPageInfo.ComPropPageInstance Is Nothing OrElse .PropertyPageInfo.Site Is Nothing Then
                                     Common.Switches.TracePDFocus(TraceLevel.Info, "  ... ComPropPageInstance or the site is Nothing")
                                     ErrorMessage = My.Resources.Designer.APPDES_ErrorLoadingPropPage & vbCrLf & .PropertyPageInfo.Guid.ToString()
-                                Else
+                                ElseIf Not .DesignerCreated Then
                                     Common.Switches.TracePDFocus(TraceLevel.Info, "  ... Calling CreateDesigner")
                                     HostingPanel.SuspendLayout()
                                     Try
@@ -1091,6 +1094,11 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
                         Dim PropPageView As PropPageDesigner.PropPageDesignerView
                         PropPageView = TryCast(NewCurrentPanel.DocView, PropPageDesigner.PropPageDesignerView)
                         If PropPageView IsNot Nothing Then
+                            ' In partial load mode the property page view might have had its doc data and view set, but not been initialized yet, so do that now
+                            If PropPageView.DTEProject Is Nothing Then
+                                PropPageView.Init(DTEProject, NewCurrentPanel.PropertyPageInfo.ComPropPageInstance, NewCurrentPanel.PropertyPageInfo.Site, _projectHierarchy, NewCurrentPanel.PropertyPageInfo.IsConfigPage)
+                            End If
+
                             'We are looping in the same page, do not set the undo status to clean
                             PropPageView.SetControls(True)
                         Else

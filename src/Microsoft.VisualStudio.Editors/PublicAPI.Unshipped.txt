@@ -1,5 +1,7 @@
 Microsoft.VisualStudio.Editors.PropertyPages.CodeAnalysisPropPageComClass
 Microsoft.VisualStudio.Editors.PropertyPages.CodeAnalysisPropPageComClass.New() -> Void
+Microsoft.VisualStudio.Editors.PropPageDesigner.PropPageDesignerEditorFactory.GetDocData() -> Object (forwarded, contained in Microsoft.VisualStudio.AppDesigner)
+Microsoft.VisualStudio.Editors.PropPageDesigner.PropPageDesignerEditorFactory.GetDocView(fileName As String) -> Object (forwarded, contained in Microsoft.VisualStudio.AppDesigner)
 My.Resources.GeneralOptionPageResources
 Shared My.Resources.GeneralOptionPageResources.Culture() -> System.Globalization.CultureInfo
 Shared My.Resources.GeneralOptionPageResources.Culture(Value As System.Globalization.CultureInfo) -> Void
