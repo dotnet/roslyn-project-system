@@ -21,7 +21,7 @@
     <DesignerFunctionVisibility Condition="'$(DesignerFunctionVisibility)' == ''">Private</DesignerFunctionVisibility>
     <DesignerVariableNaming Condition="'$(DesignerVariableNaming)' == ''">Camel</DesignerVariableNaming>
     <DesignerHiddenCodeGeneration Condition="'$(DesignerHiddenCodeGeneration)' == ''">Declarations</DesignerHiddenCodeGeneration>
-  
+    <CopyingConfigurationProperties Condition="'$(CopyingConfigurationProperties)' == ''">Optimize;DebugSymbols</CopyingConfigurationProperties>
     <!-- Turn off rules and capabilities that are defined in MSBuild so that we can import our own below -->
     <DefineCSharpItemSchemas>false</DefineCSharpItemSchemas>
   </PropertyGroup>
