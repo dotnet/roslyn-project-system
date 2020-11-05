@@ -8,26 +8,36 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Web
     {
         public WebProjectProperties(
             string applicationDirectory,
-            Uri applicationUrl,
-            Uri browseUrl,
             string projectDirectory,
-            Uri projectUrl)
+            WebLaunchSettings webLaunchSettings)
         {
             ApplicationDirectory = applicationDirectory;
-            ApplicationUrl = applicationUrl;
-            BrowseUrl = browseUrl;
             ProjectDirectory = projectDirectory;
-            ProjectUrl = projectUrl;
+
+            if (webLaunchSettings.ServerUrls.Count > 0)
+            {
+                var projectUri = new Uri(webLaunchSettings.ServerUrls[0]);
+                ProjectUrl = projectUri;
+                ApplicationUrl = projectUri;
+                BrowseUrl = projectUri;
+            }
+
+            ServerType = webLaunchSettings.ServerType;
+            IISExpressUsesGlobalAppHostCfgFile = webLaunchSettings.UseGlobalAppHostCfgFile;
         }
 
         public string ApplicationDirectory { get; }
 
-        public Uri ApplicationUrl { get; }
+        public Uri? ApplicationUrl { get; }
 
-        public Uri BrowseUrl { get; }
+        public Uri? BrowseUrl { get; }
 
         public string ProjectDirectory { get; }
 
-        public Uri ProjectUrl { get; }
+        public Uri? ProjectUrl { get; }
+
+        public ServerType ServerType { get; }
+
+        public bool IISExpressUsesGlobalAppHostCfgFile { get; }
     }
 }

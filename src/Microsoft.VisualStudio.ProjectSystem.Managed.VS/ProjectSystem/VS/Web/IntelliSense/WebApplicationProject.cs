@@ -249,24 +249,28 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Web.IntelliSense
 
         public int GetDefaultLanguage(out string? pbstrLanguage)
         {
+            // Use default (WAPS don't override this)
             pbstrLanguage = null;
             return HResult.NotImplemented;
         }
 
         public int GetNewStyleSheetFolder(out string? styleSheetFolder)
         {
+            // Use default behavior (WAPS don't override this)
             styleSheetFolder = null;
             return HResult.NotImplemented;
         }
 
         public int IsDesignViewDisabled(string filePath, out bool isDesignViewDisabled)
         {
+            // Use default behavior (WAPS don't override this)
             isDesignViewDisabled = false;
             return HResult.OK;
         }
 
         public int GetUrlPicker(out object? urlPicker)
         {
+            // Use default behavior (WAPS don't override this)
             urlPicker = null;
             return HResult.NotImplemented;
         }

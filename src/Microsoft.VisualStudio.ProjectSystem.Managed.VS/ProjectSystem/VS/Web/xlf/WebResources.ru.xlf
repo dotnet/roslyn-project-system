@@ -1,0 +1,167 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:schemaLocation="urn:oasis:names:tc:xliff:document:1.2 xliff-core-1.2-transitional.xsd">
+  <file datatype="xml" source-language="en" target-language="ru" original="../WebResources.resx">
+    <body>
+      <trans-unit id="CantGetApplcationHostConfigFile">
+        <source>Failed to get the path to the applicationhost.config file.</source>
+        <target state="new">Failed to get the path to the applicationhost.config file.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="NeedToSelectANonInternalBrowser">
+        <source>A web browser has not been selected in the Browse With dialog.</source>
+        <target state="new">A web browser has not been selected in the Browse With dialog.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="NoServerURLsConfigured">
+        <source>No server URLs have been configured for the project.</source>
+        <target state="new">No server URLs have been configured for the project.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_AdminReqToCreateSiteWithPort">
+        <source>Cannot create the Web site '{0}'. You must run Visual Studio in the context of an administrator account to create IIS Express sites with ports less than 1024.</source>
+        <target state="new">Cannot create the Web site '{0}'. You must run Visual Studio in the context of an administrator account to create IIS Express sites with ports less than 1024.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_AspNetNotRegistered">
+        <source>ASP.NET {0} has not been registered on the Web server. You need to manually configure your Web server for ASP.NET {0} in order for your site to run correctly.</source>
+        <target state="new">ASP.NET {0} has not been registered on the Web server. You need to manually configure your Web server for ASP.NET {0} in order for your site to run correctly.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_E_VDirAlreadyMapped">
+        <source>=The Web project '{1}' is currently configured to use the URL '{0}'. The Web server has this URL mapped to a different folder '{2}'.</source>
+        <target state="new">=The Web project '{1}' is currently configured to use the URL '{0}'. The Web server has this URL mapped to a different folder '{2}'.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_ErrAlreadyHostedOnDifferentFolder">
+        <source>The URL '{0}' is already mapped to a different folder '{1}'.</source>
+        <target state="new">The URL '{0}' is already mapped to a different folder '{1}'.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_ErrCreatingVDIROnOpen">
+        <source>Creation of the virtual directory {0} failed with the error: {1}. You will need to manually create this virtual directory in IIS before you can open this project.
+    </source>
+        <target state="new">Creation of the virtual directory {0} failed with the error: {1}. You will need to manually create this virtual directory in IIS before you can open this project.
+    </target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_IISNotInstalled">
+        <source>The project ('{0}') is configured to use IIS, but IIS is not installed on this computer. To open this project, you must first install IIS or convert the project to use IIS Express.</source>
+        <target state="new">The project ('{0}') is configured to use IIS, but IIS is not installed on this computer. To open this project, you must first install IIS or convert the project to use IIS Express.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_IIS_Required">
+        <source>The Web Application Project {0} is configured to use IIS.
+
+{1}</source>
+        <target state="new">The Web Application Project {0} is configured to use IIS.
+
+{1}</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_InvalidAppHost_ConvertToIISX">
+        <source>The IIS Express applicationHost.config file contains invalid entries and must be corrected before you can use it.
+    
+{0}</source>
+        <target state="new">The IIS Express applicationHost.config file contains invalid entries and must be corrected before you can use it.
+    
+{0}</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_InvalidAppHost_IIS">
+        <source>The IIS configuration data contains invalid entries and must be corrected.
+    
+{0}</source>
+        <target state="new">The IIS configuration data contains invalid entries and must be corrected.
+    
+{0}</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_InvalidAppHost_IISX">
+        <source>The IIS Express applicationHost.config file contains invalid entries and must be corrected.
+    
+{0}</source>
+        <target state="new">The IIS Express applicationHost.config file contains invalid entries and must be corrected.
+    
+{0}</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_InvalidAppHost_IISX_Open">
+        <source>The IIS Express applicationHost.config file contains invalid entries and must be corrected before you can open project {0}.
+  
+{1}</source>
+        <target state="new">The IIS Express applicationHost.config file contains invalid entries and must be corrected before you can open project {0}.
+  
+{1}</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_InvalidAppHost_IIS_Open">
+        <source>The IIS configuration data contains invalid entries and must be corrected before you can open project {0}.
+ 
+{1}</source>
+        <target state="new">The IIS configuration data contains invalid entries and must be corrected before you can open project {0}.
+ 
+{1}</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_InvalidIISUrl1">
+        <source>The local IIS server URL '{0}' is not a valid URL that includes the protocol (http:// or https://). {1}</source>
+        <target state="new">The local IIS server URL '{0}' is not a valid URL that includes the protocol (http:// or https://). {1}</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_LocalUrlRequiredToCreateSite">
+        <source>Cannot create the Web site '{0}'. You must specify "localhost" for the server name</source>
+        <target state="new">Cannot create the Web site '{0}'. You must specify "localhost" for the server name</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_MissingComponents">
+        <source>Components required to work with web servwers are not available. Make sure the Web workload is installed.</source>
+        <target state="new">Components required to work with web servwers are not available. Make sure the Web workload is installed.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_MustSpecifyIISExpressUrl">
+        <source>Project {0} needs to specify an IIS Express Url.</source>
+        <target state="new">Project {0} needs to specify an IIS Express Url.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_P_FixScriptMaps">
+        <source>ASPThe Web {0} is currently configured for use with ASP.NET {1}. Web project {2} is targeting ASP.NET {3}; if not configured some features may make incorrect assumptions, and pages designed with the tool may not render correctly.\n\nWould you like the site to be configured for use with ASP.NET {3}?</source>
+        <target state="new">ASPThe Web {0} is currently configured for use with ASP.NET {1}. Web project {2} is targeting ASP.NET {3}; if not configured some features may make incorrect assumptions, and pages designed with the tool may not render correctly.\n\nWould you like the site to be configured for use with ASP.NET {3}?</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_P_ReMapVDir_Path">
+        <source>The Web project '{1}' is currently configured to use the URL '{0}'. The Web server has this URL mapped to a different folder '{2}'. Would you like to remap this URL to point to this Web project's folder?</source>
+        <target state="new">The Web project '{1}' is currently configured to use the URL '{0}'. The Web server has this URL mapped to a different folder '{2}'. Would you like to remap this URL to point to this Web project's folder?</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_P_ReMapVDir_Path2">
+        <source>The URL '{0}' is mapped to a different folder '{1}'. Would you like to remap this URL to point to this Web project's folder?</source>
+        <target state="new">The URL '{0}' is mapped to a different folder '{1}'. Would you like to remap this URL to point to this Web project's folder?</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_Requires64BitOS">
+        <source>Project {0} has been configured to run the 64 bit version of IIS Express which is not available on this 32 bit operating system. If the project does not require the 64 bit version of IIS Express, change this option on the project's 'Web' property page.</source>
+        <target state="new">Project {0} has been configured to run the 64 bit version of IIS Express which is not available on this 32 bit operating system. If the project does not require the 64 bit version of IIS Express, change this option on the project's 'Web' property page.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="Project_ScriptmapFailure">
+        <source>Configuring Web {0} for ASP.NET {1} failed. You must manually configure this site for ASP.NET {1} in order for the site to run correctly. {2}</source>
+        <target state="new">Configuring Web {0} for ASP.NET {1} failed. You must manually configure this site for ASP.NET {1} in order for the site to run correctly. {2}</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="UnableToGetIISExpressWebServer">
+        <source>Cannot get a web server for the project '{0}'.</source>
+        <target state="new">Cannot get a web server for the project '{0}'.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="UnableToLaunchIISExpress">
+        <source>Unable to launch the IIS Express Web server.
+
+{0}</source>
+        <target state="new">Unable to launch the IIS Express Web server.
+
+{0}</target>
+        <note />
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

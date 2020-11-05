@@ -31,6 +31,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Web.IntelliSense
             private readonly IWebProject _webProject;
             private readonly SpecialCodeFolderDataSource _specialWebFolderDataSource;
 
+            private int _blockingItemTypeResolution;
+
             [ImportingConstructor]
             internal Instance(UnconfiguredProject project, IWebProject webProject, SpecialCodeFolderDataSource specialWebFolderDataSource)
             {
@@ -62,12 +64,29 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Web.IntelliSense
 
             public int IsBlockingItemTypeResolver(out bool isBlockingItemTypeResolver)
             {
-                throw new NotImplementedException();
+                isBlockingItemTypeResolver = (_blockingItemTypeResolution > 0);
+                return HResult.OK;
             }
 
             public int BlockItemTypeResolver(bool blockItemTypeResolver)
             {
-                throw new NotImplementedException();
+                if (blockItemTypeResolver)
+                {
+                    _blockingItemTypeResolution++;
+                }
+                else
+                {
+                    if (_blockingItemTypeResolution > 0)
+                    {
+                        _blockingItemTypeResolution--;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.Fail("unbalanced _blockingItemTypeResolution");
+                    }
+                }
+
+                return HResult.OK;
             }
 
             public int GetIWebApplication(out IntPtr ppvDataEnv)
@@ -86,7 +105,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Web.IntelliSense
 
             public int GetBrowseUrl(out string? browseURL)
             {
-                browseURL = _webProject.Properties?.BrowseUrl.AbsoluteUri;
+                browseURL = _webProject.Properties?.BrowseUrl?.AbsoluteUri;
 
                 return browseURL != null ? HResult.OK : HResult.Fail;
             }
@@ -95,7 +114,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Web.IntelliSense
 
             public int GetWebUrl(out string? ppWebUrl)
             {
-                ppWebUrl = _webProject.Properties?.ApplicationUrl.AbsoluteUri;
+                ppWebUrl = _webProject.Properties?.ApplicationUrl?.AbsoluteUri;
 
                 return ppWebUrl != null ? HResult.OK : HResult.Fail;
             }
@@ -109,7 +128,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Web.IntelliSense
 
             public int GetWebProjectUrl(out string? ppWebProjectUrl)
             {
-                ppWebProjectUrl = _webProject.Properties?.ProjectUrl.AbsoluteUri;
+                ppWebProjectUrl = _webProject.Properties?.ProjectUrl?.AbsoluteUri;
 
                 return ppWebProjectUrl != null ? HResult.OK : HResult.Fail;
             }
@@ -121,12 +140,13 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Web.IntelliSense
                 return ppWebProjectPath != null ? HResult.OK : HResult.Fail;
             }
 
-#pragma warning disable CA1822 // Mark members as static
             public int UsesIISWebServer(out bool usesIISWebServer)
-#pragma warning restore CA1822 // Mark members as static
             {
-                // TODO: Fill this out
-                usesIISWebServer = false;
+                IWebProjectProperties? props = _webProject.Properties;
+                usesIISWebServer =  props != null &&
+                                    (props.ServerType == ServerType.IIS || 
+                                    (props.ServerType == ServerType.IISExpress && props.IISExpressUsesGlobalAppHostCfgFile));
+
                 return HResult.OK;
             }
 

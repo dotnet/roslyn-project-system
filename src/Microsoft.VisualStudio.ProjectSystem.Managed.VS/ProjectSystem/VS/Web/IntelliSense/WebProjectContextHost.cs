@@ -23,6 +23,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Web.IntelliSense
         private readonly IUnconfiguredProjectVsServices _projectVsServices;
         private readonly IUnconfiguredProjectTasksService _projectTasksService;
         private readonly IVsUIService<IVsWebContextService> _webContextService;
+        private readonly IWebLaunchSettingsProvider _webLaunchSettingsProvider;
         
         [ImportingConstructor]
         public WebProjectContextHost(
@@ -30,13 +31,15 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Web.IntelliSense
             UnconfiguredProject project,
             IUnconfiguredProjectVsServices projectVsServices,
             IUnconfiguredProjectTasksService projectTasksService,
-            IVsUIService<SWebApplicationCtxSvc, IVsWebContextService> webContextService)
+            IVsUIService<SWebApplicationCtxSvc, IVsWebContextService> webContextService,
+            IWebLaunchSettingsProvider webLaunchSettingsProvider)
         {
             _threadingService = threadingService;
             _project = project;
             _projectVsServices = projectVsServices;
             _projectTasksService = projectTasksService;
             _webContextService = webContextService;
+            _webLaunchSettingsProvider = webLaunchSettingsProvider;
         }
 
         public IWebProjectProperties? Properties { get; private set; }
@@ -50,13 +53,11 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Web.IntelliSense
                 await _projectTasksService.ProjectLoadedInHost;
 
                 // Creating the web context requires these properties, so set them before
+                WebLaunchSettings launchSettings = await _webLaunchSettingsProvider.GetLaunchSettingsAsync();
                 Properties = new WebProjectProperties(
                     Path.GetDirectoryName(_project.FullPath) + "\\",
-                    new Uri("http://localhost"),
-                    new Uri("http://localhost"),
                     Path.GetDirectoryName(_project.FullPath) + "\\",
-                    new Uri("http://localhost"));
-
+                    launchSettings);
                 Services = await CreateWebProjectServicesAsync();
 
             }, _project, ProjectFaultSeverity.LimitedFunctionality);

@@ -11,12 +11,12 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Web
             get;
         }
 
-        Uri ApplicationUrl
+        Uri? ApplicationUrl
         {
             get;
         }
 
-        Uri BrowseUrl
+        Uri? BrowseUrl
         {
             get;
         }
@@ -26,7 +26,17 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Web
             get;
         }
 
-        Uri ProjectUrl
+        Uri? ProjectUrl
+        {
+            get;
+        }
+        
+        ServerType ServerType
+        {
+            get;
+        }
+
+        bool IISExpressUsesGlobalAppHostCfgFile
         {
             get;
         }

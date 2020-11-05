@@ -19,6 +19,7 @@ namespace Microsoft.VisualStudio.ProjectSystem
 
         public const string AppDesigner = nameof(AppDesigner);
         public const string AppSettings = nameof(AppSettings);
+        public const string AspNet = nameof(AspNet);
         public const string DependenciesTree = nameof(DependenciesTree);
         public const string ProjectImportsTree = nameof(ProjectImportsTree);
         public const string EditAndContinue = nameof(EditAndContinue);
@@ -31,6 +32,7 @@ namespace Microsoft.VisualStudio.ProjectSystem
         public const string ProjectConfigurationsDeclaredDimensions = ProjectCapabilities.ProjectConfigurationsDeclaredDimensions;
         public const string LanguageService = nameof(LanguageService);
         public const string DotNetLanguageService = DotNet + " & " + LanguageService;
+        public const string AspNetLaunchProfiles = AspNet + "&" + LaunchProfiles;
 
         /// <summary>
         /// Instructs CPS to order tree items according to the <see cref="IProjectTree2.DisplayOrder"/> property first.

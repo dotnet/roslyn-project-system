@@ -19,6 +19,9 @@
     <ProjectReference Include="..\Microsoft.VisualStudio.ProjectSystem.Managed\Microsoft.VisualStudio.ProjectSystem.Managed.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Web.Application" Version="16.9.30626.165-pre" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="Microsoft.VisualStudio.ProjectSystem.Managed.VS.UnitTests" />
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" Key="$(MoqPublicKey)" />
   </ItemGroup>
@@ -56,6 +59,11 @@
     </Compile>
     <Compile Update="ProjectSystem\VS\UI\DontShowAgainMessageBox.xaml.cs">
       <DependentUpon>DontShowAgainMessageBox.xaml</DependentUpon>
+    </Compile>
+    <Compile Update="ProjectSystem\VS\Web\WebResources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>WebResources.resx</DependentUpon>
     </Compile>
     <Compile Update="VSResources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -136,6 +144,11 @@
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>PropertyPageResources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Update="ProjectSystem\VS\Web\WebResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>WebResources.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>Microsoft.VisualStudio.ProjectSystem.VS.Web</CustomToolNamespace>
     </EmbeddedResource>
     <EmbeddedResource Update="VSResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
