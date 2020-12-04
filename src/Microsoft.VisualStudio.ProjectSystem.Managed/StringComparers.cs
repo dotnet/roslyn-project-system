@@ -21,6 +21,7 @@ namespace Microsoft.VisualStudio
         public static StringComparer RuleNames => StringComparer.OrdinalIgnoreCase;
         public static StringComparer CategoryNames => StringComparer.OrdinalIgnoreCase;
         public static StringComparer ConfigurationDimensionNames => StringComparer.Ordinal;
+        public static StringComparer ConfigurationDimensionValues => StringComparer.Ordinal;
         public static StringComparer DependencyProviderTypes => StringComparer.OrdinalIgnoreCase;
         public static StringComparer DependencyTreeIds => StringComparer.OrdinalIgnoreCase;
         public static StringComparer ItemNames => StringComparer.OrdinalIgnoreCase;
@@ -57,6 +58,7 @@ namespace Microsoft.VisualStudio
         public static StringComparison PropertyValues => StringComparison.Ordinal;
         public static StringComparison RuleNames => StringComparison.OrdinalIgnoreCase;
         public static StringComparison ConfigurationDimensionNames => StringComparison.Ordinal;
+        public static StringComparison ConfigurationDimensionValues => StringComparison.Ordinal;
         public static StringComparison DependencyProviderTypes => StringComparison.OrdinalIgnoreCase;
         public static StringComparison DependencyTreeIds => StringComparison.OrdinalIgnoreCase;
         public static StringComparison ItemNames => StringComparison.OrdinalIgnoreCase;

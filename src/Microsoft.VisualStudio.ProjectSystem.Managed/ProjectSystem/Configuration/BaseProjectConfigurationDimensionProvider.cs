@@ -58,7 +58,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.Configuration
             }
             else
             {
-                return BuildUtilities.GetPropertyValues(propertyValue).ToImmutableArray();
+                return ConfigUtilities.EnumerateDimensionValues(propertyValue).ToImmutableArray();
             }
 
             async Task<string?> GetPropertyValueAsync(UnconfiguredProject project)
@@ -162,11 +162,11 @@ namespace Microsoft.VisualStudio.ProjectSystem.Configuration
                     {
                         case ConfigurationDimensionChange.Add:
                             return UpdateUnderLockAsync(args.Project, (msbuildProject, evaluatedPropertyValue) =>
-                                BuildUtilities.AppendPropertyValue(msbuildProject, evaluatedPropertyValue, PropertyName, args.DimensionValue));
+                                ConfigUtilities.AppendDimensionValue(msbuildProject, evaluatedPropertyValue, PropertyName, args.DimensionValue));
 
                         case ConfigurationDimensionChange.Delete:
                             return UpdateUnderLockAsync(args.Project, (msbuildProject, evaluatedPropertyValue) =>
-                                BuildUtilities.RemovePropertyValue(msbuildProject, evaluatedPropertyValue, PropertyName, args.DimensionValue));
+                                ConfigUtilities.RemoveDimensionValue(msbuildProject, evaluatedPropertyValue, PropertyName, args.DimensionValue));
 
                         case ConfigurationDimensionChange.Rename:
                             // Need to wait until the core rename changes happen before renaming the property.
@@ -180,7 +180,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.Configuration
                     if (args.Change == ConfigurationDimensionChange.Rename)
                     {
                         return UpdateUnderLockAsync(args.Project, (msbuildProject, evaluatedPropertyValue) =>
-                            BuildUtilities.RenamePropertyValue(msbuildProject, evaluatedPropertyValue, PropertyName, args.OldDimensionValue, args.DimensionValue));
+                            ConfigUtilities.RenameDimensionValue(msbuildProject, evaluatedPropertyValue, PropertyName, args.OldDimensionValue, args.DimensionValue));
                     }
                 }
             }
@@ -211,7 +211,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.Configuration
             if (Strings.IsNullOrEmpty(values))
                 return null;
 
-            foreach (string defaultValue in BuildUtilities.GetPropertyValues(values))
+            foreach (string defaultValue in ConfigUtilities.EnumerateDimensionValues(values))
             {
                 // If this property is derived from another property, skip it and just
                 // pull default from next known values. This is better than picking a 
@@ -245,7 +245,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.Configuration
             return properties.Reverse()
                              .FirstOrDefault(
                                 p => StringComparers.PropertyNames.Equals(PropertyName, p.Name) &&
-                                BuildUtilities.HasWellKnownConditionsThatAlwaysEvaluateToTrue(p));
+                                ConfigUtilities.HasWellKnownConditionsThatAlwaysEvaluateToTrue(p));
         }
     }
 }
