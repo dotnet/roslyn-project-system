@@ -16,6 +16,7 @@ namespace Microsoft.VisualStudio.ProjectSystem
         private readonly Lazy<IProjectAccessor> _projectAccessor;
         private readonly IActiveConfiguredValue<ConfiguredProject> _activeConfiguredProject;
         private readonly IActiveConfiguredValue<ProjectProperties> _activeConfiguredProjectProperties;
+        private bool _cacheApplicable;
 
         [ImportingConstructor]
         public UnconfiguredProjectCommonServices(UnconfiguredProject project, Lazy<IProjectThreadingService> threadingService,
@@ -27,7 +28,15 @@ namespace Microsoft.VisualStudio.ProjectSystem
             _activeConfiguredProject = activeConfiguredProject;
             _activeConfiguredProjectProperties = activeConfiguredProjectProperties;
             _projectAccessor = projectAccessor;
+
+            _threadingService.Value.ExecuteSynchronously(async () =>
+            {
+                await _threadingService.Value.SwitchToUIThread();
+                _cacheApplicable = FeatureFlagHelper.IsFeatureEnabled(FeatureFlagHelper.FeatureFlagCacheModeEnabled, false);
+            });
         }
+
+        public bool CacheApplicable => _cacheApplicable;
 
         public IProjectThreadingService ThreadingService
         {

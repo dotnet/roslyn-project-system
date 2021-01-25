@@ -34,5 +34,10 @@ namespace Microsoft.VisualStudio.ProjectSystem
         ///     Gets the <see cref="IProjectAccessor"/> which provides access to MSBuild evaluation and construction models for a project.
         /// </summary>
         IProjectAccessor ProjectAccessor { get; }
+
+        /// <summary>
+        /// Gets or sets if the project cache is applicable to this project.
+        /// </summary>
+        bool CacheApplicable { get; }
     }
 }

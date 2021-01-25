@@ -44,6 +44,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS
         private readonly IVsService<IVsSolution> _vsSolutionService;
         private readonly IVsService<IVsAppId> _vsAppIdService;
         private readonly IVsService<IVsShell> _vsShellService;
+        private readonly IUnconfiguredProjectCommonServices _commonServices;
         private RemoteCacheFile? _versionDataCacheFile;
         private uint _solutionCookie = VSConstants.VSCOOKIE_NIL;
         private DateTime _timeCurVersionDataLastUpdatedUtc = DateTime.MinValue; // Tracks how often we need to look for new data
@@ -65,7 +66,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS
                                                       IVsService<SVsSettingsPersistenceManager, ISettingsManager> settingsManagerService,
                                                       IVsService<SVsSolution, IVsSolution> vsSolutionService,
                                                       IVsService<SVsAppId, IVsAppId> vsAppIdService,
-                                                      IVsService<SVsShell, IVsShell> vsShellService)
+                                                      IVsService<SVsShell, IVsShell> vsShellService,
+                                                      IUnconfiguredProjectCommonServices commonServices)
         {
             _projectServiceAccessor = projectAccessor;
             _dialogServices = dialogServices;
@@ -78,6 +80,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS
             _vsSolutionService = vsSolutionService;
             _vsAppIdService = vsAppIdService;
             _vsShellService = vsShellService;
+            _commonServices = commonServices;
         }
 
         public async Task InitializeAsync()
@@ -224,7 +227,13 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS
             bool isPreviewSDKInUse = await IsPreviewSDKInUseAsync();
             foreach (UnconfiguredProject project in projects)
             {
-                // Track the most severe compatibility level
+                ConfiguredProject? configuredProject = await project.GetSuggestedConfiguredProjectAsync();
+                if (_commonServices.CacheApplicable && configuredProject?.ProjectVersion.CompareTo(DataflowUtilities.CacheModeVersion) != 0)
+                {
+                    continue;
+                }
+
+                // Track the most severe compatibility level if not in cached read mode
                 CompatibilityLevel compatLevel = await GetProjectCompatibilityAsync(project, compatDataToUse, isPreviewSDKInUse);
                 if (compatLevel != CompatibilityLevel.Recommended && compatLevel > finalCompatLevel)
                 {

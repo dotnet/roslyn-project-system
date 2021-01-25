@@ -13,6 +13,10 @@ namespace Microsoft.VisualStudio.ProjectSystem
     /// </summary>
     internal static class DataflowUtilities
     {
+        private const long CacheVersion = 0L;
+
+        public static IComparable CacheModeVersion => CacheVersion;
+
         /// <summary>
         ///     Links to the specified <see cref="Action{T}" /> to receive a cross-sectional slice of project
         ///     data,  including detailed descriptions of what changed between snapshots, as described by

@@ -27,9 +27,10 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.VersionCompatibility
                                                           IVsService<SVsSolution, IVsSolution> vsSolutionService,
                                                           IVsService<SVsAppId, IVsAppId> vsAppIdService,
                                                           IVsService<SVsShell, IVsShell> vsShellService,
+                                                          IUnconfiguredProjectCommonServices commonServices,
                                                           bool hasNewProjects = false,
                                                           bool usingPreviewSDK = false) :
-            base(projectAccessor, dialogServices, threadHandling, vsShellUtilitiesHelper, fileSystem, httpClient, vsUIShellService, settingsManagerService, vsSolutionService, vsAppIdService, vsShellService)
+            base(projectAccessor, dialogServices, threadHandling, vsShellUtilitiesHelper, fileSystem, httpClient, vsUIShellService, settingsManagerService, vsSolutionService, vsAppIdService, vsShellService, commonServices)
         {
             _hasNewProjects = hasNewProjects;
             _usingPreviewSDK = usingPreviewSDK;

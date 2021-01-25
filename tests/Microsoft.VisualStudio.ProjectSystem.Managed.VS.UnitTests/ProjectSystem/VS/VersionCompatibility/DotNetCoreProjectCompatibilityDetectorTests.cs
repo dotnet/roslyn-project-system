@@ -181,6 +181,9 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.VersionCompatibility
             var vsSolutionService = IVsServiceFactory.Create<SVsSolution, IVsSolution>(IVsSolutionFactory.CreateWithAdviseUnadviseSolutionEvents(1, isFullyLoaded: isSolutionOpen));
             var vsAppIdService = IVsServiceFactory.Create<SVsAppId, IVsAppId>(Mock.Of<IVsAppId>());
             var vsShellService = IVsServiceFactory.Create<SVsShell, IVsShell>(Mock.Of<IVsShell>());
+            var hierarchy = IVsHierarchyFactory.Create();
+            var unconfiguredProject = UnconfiguredProjectFactory.Create(hostObject: hierarchy);
+            var commonServices = IUnconfiguredProjectCommonServicesFactory.Create(project: unconfiguredProject);
 
             var compatibilityDetector = new TestDotNetCoreProjectCompatibilityDetector(projectAccessor,
                                                                                        lazyDialogServices,
@@ -193,6 +196,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.VersionCompatibility
                                                                                        vsSolutionService,
                                                                                        vsAppIdService,
                                                                                        vsShellService,
+                                                                                       commonServices,
                                                                                        hasNewProjects,
                                                                                        usingPreviewSDK);
             return compatibilityDetector;

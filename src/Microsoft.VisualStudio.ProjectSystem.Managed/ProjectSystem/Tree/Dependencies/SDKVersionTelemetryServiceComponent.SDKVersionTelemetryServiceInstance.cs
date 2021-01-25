@@ -38,6 +38,12 @@ namespace Microsoft.VisualStudio.ProjectSystem.Tree.Dependencies
                     // Wait for the project to be loaded so that we don't prematurely load the active configuration
                     await _unconfiguredProjectTasksService.ProjectLoadedInHost;
 
+                    // CACHE_PRODUCTIZE
+                    if (_projectVsServices.CacheApplicable)
+                    {
+                        return;
+                    }
+
                     ConfigurationGeneral projectProperties = await _projectVsServices.ActiveConfiguredProjectProperties.GetConfigurationGeneralPropertiesAsync();
                     Task<object?>? task = projectProperties?.NETCoreSdkVersion?.GetValueAsync();
                     string? version = task == null ? string.Empty : (string?)await task;

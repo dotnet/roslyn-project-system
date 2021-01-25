@@ -25,6 +25,12 @@
 
   <!-- Dependencies -->
   <ItemGroup>
+    <PackageReference Include="Microsoft.Internal.VisualStudio.Shell.Interop.14.0.DesignTime" Version="14.3.25407-alpha" />
+    <PackageReference Include="Microsoft.VisualStudio.Shell.15.0" Version="16.7.30329.88" />
+    <PackageReference Include="Microsoft.ServiceHub.Framework" Version="2.7.313-preview" />
+  </ItemGroup>
+  
+  <ItemGroup>
     <!-- Analyzer Reference -->
     <Compile Update="ProjectSystem\Rules\Dependencies\AnalyzerReference.xaml.cs">
       <DependentUpon>AnalyzerReference.xaml</DependentUpon>

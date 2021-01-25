@@ -22,6 +22,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS
             _commonServices = commonServices;
             _projectTree = projectTree;
         }
+        public bool CacheApplicable => false;
 
         public IVsHierarchy VsHierarchy
         {
