@@ -67,6 +67,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
 
             public ImmutableDictionary<string, ImmutableHashSet<(string Path, string? Link, CopyType CopyType)>> ItemsByItemType { get; }
 
+            public ImmutableDictionary<string, (string targetPath, CopyType copyType)> CopyToOutputDirectoryItems { get; }
+
             public ImmutableArray<string> SetNames { get; }
 
             public ImmutableDictionary<string, ImmutableHashSet<string>> UpToDateCheckInputItemsBySetName { get; }
@@ -140,6 +142,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
                 LastCheckedAtUtc = DateTime.MinValue;
                 ItemTypes = ImmutableHashSet.Create<string>(StringComparers.ItemTypes);
                 ItemsByItemType = ImmutableDictionary.Create<string, ImmutableHashSet<(string Path, string? Link, CopyType CopyType)>>(StringComparers.ItemTypes);
+                CopyToOutputDirectoryItems = ImmutableDictionary.Create<string, (string targetPath, CopyType copyType)>(StringComparers.ItemNames);
                 SetNames = ImmutableArray<string>.Empty;
                 UpToDateCheckInputItemsBySetName = emptyItemBySetName;
                 UpToDateCheckOutputItemsBySetName = emptyItemBySetName;
@@ -162,6 +165,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
                 bool isDisabled,
                 ImmutableHashSet<string> itemTypes,
                 ImmutableDictionary<string, ImmutableHashSet<(string, string?, CopyType)>> itemsByItemType,
+                ImmutableDictionary<string, (string targetPath, CopyType copyType)> copyToOutputDirectoryItems,
                 ImmutableDictionary<string, ImmutableHashSet<string>> upToDateCheckInputItemsBySetName,
                 ImmutableDictionary<string, ImmutableHashSet<string>> upToDateCheckOutputItemsBySetName,
                 ImmutableDictionary<string, ImmutableHashSet<string>> upToDateCheckBuiltItemsBySetName,
@@ -184,6 +188,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
                 IsDisabled = isDisabled;
                 ItemTypes = itemTypes;
                 ItemsByItemType = itemsByItemType;
+                CopyToOutputDirectoryItems = copyToOutputDirectoryItems;
                 UpToDateCheckInputItemsBySetName = upToDateCheckInputItemsBySetName;
                 UpToDateCheckOutputItemsBySetName = upToDateCheckOutputItemsBySetName;
                 UpToDateCheckBuiltItemsBySetName = upToDateCheckBuiltItemsBySetName;
@@ -412,6 +417,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
                     itemsChanged = true;
                 }
 
+                var copyToOutputDirectoryItems = GetCopyToOutputDirectoryItems(jointRuleUpdate);
+
                 // NOTE when we previously had zero item types, we can surmise that the project has just been loaded. In such
                 // a case it is not correct to assume that the items changed, and so we do not update the timestamp.
                 // See https://github.com/dotnet/project-system/issues/5386
@@ -429,6 +436,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
                     isDisabled: isDisabled,
                     itemTypes: itemTypes,
                     itemsByItemType: itemsByItemTypeBuilder.ToImmutable(),
+                    copyToOutputDirectoryItems : copyToOutputDirectoryItems,
                     upToDateCheckInputItemsBySetName: upToDateCheckInputItems,
                     upToDateCheckOutputItemsBySetName: upToDateCheckOutputItems,
                     upToDateCheckBuiltItemsBySetName: upToDateCheckBuiltItems,
@@ -462,16 +470,16 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
                     {
                         if (string.Equals(value, Compile.CopyToOutputDirectoryValues.Always, StringComparisons.PropertyLiteralValues))
                         {
-                            return CopyType.CopyAlways;
+                            return CopyType.Always;
                         }
 
                         if (string.Equals(value, Compile.CopyToOutputDirectoryValues.PreserveNewest, StringComparisons.PropertyLiteralValues))
                         {
-                            return CopyType.CopyIfNewer;
+                            return CopyType.PreserveNewest;
                         }
                     }
 
-                    return CopyType.CopyNever;
+                    return CopyType.Never;
                 }
 
                 static string? GetLink(IImmutableDictionary<string, string> itemMetadata)
@@ -512,6 +520,28 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
                         builder.Add(item);
                     }
                 }
+
+                ImmutableDictionary<string, (string targetPath, CopyType copyType)> GetCopyToOutputDirectoryItems(IProjectSubscriptionUpdate projectSubscriptionUpdate)
+                {
+                    ImmutableDictionary<string, (string targetPath, CopyType copyType)>.Builder copyToOutputDirectoryItems =
+                        ImmutableDictionary.CreateBuilder<string, (string targetPath, CopyType copyType)>();
+
+                    if (projectSubscriptionUpdate.CurrentState.TryGetValue(CopyToOutputDirectoryItem.SchemaName,
+                        out IProjectRuleSnapshot ruleSnapshot))
+                    {
+                        foreach ((string sourcePath, IImmutableDictionary<string, string> metadata) in ruleSnapshot.Items)
+                        {
+                            CopyType copyType = GetCopyType(metadata);
+                            string? targetPath = metadata.GetStringProperty(CopyToOutputDirectoryItem.TargetPathProperty);
+                            if (Strings.IsNullOrEmpty(targetPath))
+                                continue;
+
+                            copyToOutputDirectoryItems.Add(sourcePath, (targetPath, copyType));
+                        }
+                    }
+
+                    return copyToOutputDirectoryItems.ToImmutable();
+                }
             }
 
             public State WithLastCheckedAtUtc(DateTime lastCheckedAtUtc)
@@ -526,6 +556,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
                     IsDisabled,
                     ItemTypes,
                     ItemsByItemType,
+                    CopyToOutputDirectoryItems,
                     UpToDateCheckInputItemsBySetName,
                     UpToDateCheckOutputItemsBySetName,
                     UpToDateCheckBuiltItemsBySetName,
@@ -555,6 +586,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
                     IsDisabled,
                     ItemTypes,
                     ItemsByItemType,
+                    CopyToOutputDirectoryItems,
                     UpToDateCheckInputItemsBySetName,
                     UpToDateCheckOutputItemsBySetName,
                     UpToDateCheckBuiltItemsBySetName,
@@ -584,6 +616,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
                     IsDisabled,
                     ItemTypes,
                     ItemsByItemType,
+                    CopyToOutputDirectoryItems,
                     UpToDateCheckInputItemsBySetName,
                     UpToDateCheckOutputItemsBySetName,
                     UpToDateCheckBuiltItemsBySetName,

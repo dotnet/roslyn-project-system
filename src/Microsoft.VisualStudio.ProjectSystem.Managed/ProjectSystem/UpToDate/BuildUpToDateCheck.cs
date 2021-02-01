@@ -34,7 +34,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
             .Add(CopyUpToDateMarker.SchemaName)
             .Add(UpToDateCheckInput.SchemaName)
             .Add(UpToDateCheckOutput.SchemaName)
-            .Add(UpToDateCheckBuilt.SchemaName);
+            .Add(UpToDateCheckBuilt.SchemaName)
+            .Add(CopyToOutputDirectoryItem.SchemaName);
 
         private static ImmutableHashSet<string> NonCompilationItemTypes => ImmutableHashSet<string>.Empty
             .WithComparer(StringComparers.ItemTypes)
@@ -123,7 +124,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
                 return log.Fail("FirstRun", "The up-to-date check has not yet run for this project. Not up-to-date.");
             }
 
-            string copyAlwaysItemPath = state.ItemsByItemType.SelectMany(kvp => kvp.Value).FirstOrDefault(item => item.CopyType == CopyType.CopyAlways).Path;
+            string copyAlwaysItemPath =
+                state.CopyToOutputDirectoryItems.FirstOrDefault(c => c.Value.copyType == CopyType.Always).Key;
 
             if (copyAlwaysItemPath != null)
             {
@@ -501,40 +503,33 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
             return true;
         }
 
-        private bool CheckCopyToOutputDirectoryFiles(Log log, in TimestampCache timestampCache, State state, CancellationToken token)
+        private static bool CheckPreserveNewestCopyToOutputDirectoryFiles(Log log, in TimestampCache timestampCache, State state, CancellationToken token)
         {
-            IEnumerable<(string Path, string? Link, CopyType CopyType)> items = state.ItemsByItemType.SelectMany(kvp => kvp.Value).Where(item => item.CopyType == CopyType.CopyIfNewer);
+
+            var preserveNewestItems
+                = state.CopyToOutputDirectoryItems.Where(item => item.Value.copyType == CopyType.PreserveNewest);
 
             string outputFullPath = Path.Combine(state.MSBuildProjectDirectory, state.OutputRelativeOrFullPath);
 
-            foreach ((string path, string? link, _) in items)
+            foreach ((string sourcePath, (string? targetPath,CopyType copyType)) in preserveNewestItems)
             {
                 token.ThrowIfCancellationRequested();
+                Assumes.True(Path.IsPathRooted(sourcePath));
 
-                string rootedPath = _configuredProject.UnconfiguredProject.MakeRooted(path);
-                string filename = Strings.IsNullOrEmpty(link) ? rootedPath : link;
+                log.Info("Checking PreserveNewest file '{0}':", sourcePath);
 
-                if (string.IsNullOrEmpty(filename))
-                {
-                    continue;
-                }
-
-                filename = _configuredProject.UnconfiguredProject.MakeRelative(filename);
-
-                log.Info("Checking PreserveNewest file '{0}':", rootedPath);
-
-                DateTime? itemTime = timestampCache.GetTimestampUtc(rootedPath);
+                DateTime? itemTime = timestampCache.GetTimestampUtc(sourcePath);
 
                 if (itemTime != null)
                 {
-                    log.Info("    Source {0}: '{1}'.", itemTime, rootedPath);
+                    log.Info("    Source {0}: '{1}'.", itemTime, sourcePath);
                 }
                 else
                 {
-                    return log.Fail("CopyToOutputDirectory", "Source '{0}' does not exist, not up to date.", rootedPath);
+                    return log.Fail("CopyToOutputDirectory", "Source '{0}' does not exist, not up to date.", sourcePath);
                 }
 
-                string destination = Path.Combine(outputFullPath, filename);
+                string destination = Path.Combine(outputFullPath, targetPath);
                 DateTime? destinationTime = timestampCache.GetTimestampUtc(destination);
 
                 if (destinationTime != null)
@@ -595,7 +590,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.UpToDate
 
                     if (!CheckInputsAndOutputs(logger, timestampCache, state, token) ||
                         !CheckMarkers(logger, timestampCache, state) ||
-                        !CheckCopyToOutputDirectoryFiles(logger, timestampCache, state, token) ||
+                        !CheckPreserveNewestCopyToOutputDirectoryFiles(logger, timestampCache, state, token) ||
                         !CheckCopiedOutputFiles(logger, timestampCache, state, token))
                     {
                         return false;

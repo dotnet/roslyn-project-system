@@ -173,6 +173,14 @@ namespace Microsoft.VisualStudio.ProjectSystem.Rules
             [AppliesTo(ProjectCapability.DotNet + "+ !" + ProjectCapabilities.SharedAssetsProject)]
             [Order(Order.Default)]
             public static int UpToDateCheckBuiltRule;
+
+            /// <summary>
+            ///     Represents design-time build items containing all project items that may need to be transferred to the output directory.
+            /// </summary>
+            [ExportRule(nameof(CopyToOutputDirectoryItem), PropertyPageContexts.ProjectSubscriptionService)]
+            [AppliesTo(ProjectCapability.DotNet + "+ !" + ProjectCapabilities.SharedAssetsProject)]
+            [Order(Order.Default)]
+            public static int CopyToOutputDirectoryItemRule;
         }
     }
 }

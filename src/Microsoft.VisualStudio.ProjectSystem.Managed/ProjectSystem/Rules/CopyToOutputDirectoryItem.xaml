@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.-->
+<Rule Name="CopyToOutputDirectoryItem"
+      xmlns="http://schemas.microsoft.com/build/2009/properties">
+
+  <Rule.DataSource>
+    <DataSource HasConfigurationCondition="False"
+                MSBuildTarget="GetCopyToOutputDirectoryItems"
+                Persistence="ProjectFile"
+                SourceOfDefaultValue="AfterContext"
+                SourceType="TargetResults" />
+  </Rule.DataSource>
+
+  <StringProperty Name="TargetPath"
+                  Visible="False" />
+
+  <EnumProperty Name="CopyToOutputDirectory"  Visible="False">
+    <EnumValue Name="Never" />
+    <EnumValue Name="Always" />
+    <EnumValue Name="PreserveNewest" />
+  </EnumProperty>
+
+</Rule>
