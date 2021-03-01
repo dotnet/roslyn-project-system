@@ -30,12 +30,12 @@ namespace Microsoft.VisualStudio.Telemetry
                 });
         }
 
-        public void PostPackageRestoreEvent(string packageRestoreOperationName, bool isRestoreUpToDate)
+        public void PostNominationCompleteEvent(bool nominationSucceeded)
         {
             _telemetryService.PostProperties(TelemetryEventName.ProcessPackageRestore, new (string propertyName, object propertyValue)[]
                 {
-                    (TelemetryPropertyName.PackageRestoreIsUpToDate, isRestoreUpToDate),
-                    (TelemetryPropertyName.PackageRestoreOperation, packageRestoreOperationName),
+                    (TelemetryPropertyName.PackageRestoreOperation, PackageRestoreOperationNames.EndNominateRestore),
+                    (TelemetryPropertyName.PackageRestoreNominationSucceeded, nominationSucceeded),
                     (TelemetryPropertyName.PackageRestoreProjectId, ProjectTelemetryId),
                 });
         }

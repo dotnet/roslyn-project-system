@@ -13,12 +13,13 @@ namespace Microsoft.VisualStudio.Telemetry
     /// restore has completed. This interface provides methods to enable this notification by posting
     /// this event:
     /// 
-    ///  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    /// | Event Name                                             | Property Name                                                | Property Value                                                                           |
-    /// |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-    /// | <see cref="TelemetryEventName.ProcessPackageRestore"/> | <see cref="TelemetryPropertyName.PackageRestoreOperation"/>  | PackageRestoreOperationNames.PackageRestoreProgressTrackerRestoreCompleted               |
-    /// |                                                        | <see cref="TelemetryPropertyName.PackageRestoreIsUpToDate"/> | True when operation progress is notified                                                 |
-    ///  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    ///  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    /// | Event Name                                             | Property Name                                                | Property Value                                                                |
+    /// |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+    /// | <see cref="TelemetryEventName.ProcessPackageRestore"/> | <see cref="TelemetryPropertyName.PackageRestoreOperation"/>  | PackageRestoreOperationNames.PackageRestoreProgressTrackerRestoreCompleted    |
+    /// |                                                        | <see cref="TelemetryPropertyName.PackageRestoreSucceeded"/>  | Restore success/failure flag posted when operation progress has been notified |
+    /// |                                                        |                                                              | that package restore is up to date                                            |
+    ///  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     ///
     /// It also enables the package restore components to post telemetry events indicating
     /// whether the initialization of the package restore components (for the ConfiguredProject) suceeded.
@@ -41,11 +42,11 @@ namespace Microsoft.VisualStudio.Telemetry
 
         /// <summary>
         /// Posts a <see cref="TelemetryEventName.ProcessPackageRestore"/> event with a
-        /// <see cref="TelemetryPropertyName.PackageRestoreIsUpToDate"/> property whose value will be set to
-        /// indicate whether package restore is up to date.
+        /// <see cref="TelemetryPropertyName.PackageRestoreSucceeded"/> property whose value will be set to
+        /// indicate whether package restore succeeded.
         /// </summary>
-        /// <param name="isRestoreUpToDate">Flag indicating whether the restore is up to date.</param>
+        /// <param name="restoreSucceeded">Flag indicating if the restore was successful.</param>
         /// <param name="packageRestoreProgressTrackerId">An identifier to enable correlation of events.</param>
-        void PostPackageRestoreCompletedEvent(bool isRestoreUpToDate, long packageRestoreProgressTrackerId);
+        void PostPackageRestoreCompletedEvent(bool restoreSucceeded, long packageRestoreProgressTrackerId);
     }
 }

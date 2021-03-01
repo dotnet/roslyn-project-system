@@ -30,5 +30,13 @@ namespace Microsoft.VisualStudio.Telemetry
         /// </summary>
         /// <param name="packageRestoreOperationName">The name of the specific package restore operation.</param>
         void PostPackageRestoreEvent(string packageRestoreOperationName);
+
+        /// <summary>
+        /// Posts a <see cref="TelemetryEventName.ProcessPackageRestore"/> event with a
+        /// <see cref="TelemetryPropertyName.PackageRestoreNominationSucceeded"/> property whose value will be set to
+        /// indicate whether or not nomination of a project for restore succeeded.
+        /// </summary>
+        /// <param name="nominationSucceeded">Flag indicating whether the project nomination completed successfully.</param>
+        void PostNominationCompleteEvent(bool nominationSucceeded);
     }
 }

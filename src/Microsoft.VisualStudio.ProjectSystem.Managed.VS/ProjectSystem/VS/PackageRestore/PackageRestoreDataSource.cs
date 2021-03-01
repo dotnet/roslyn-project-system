@@ -179,16 +179,18 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             _packageReferenceTelemetryService.PostPackageRestoreEvent(PackageRestoreOperationNames.BeginNominateRestore);
             RestoreLogger.BeginNominateRestore(_logger, _project.FullPath, restoreInfo);
 
+            bool nominationSucceeded = false;
             try
             {
-                return await _solutionRestoreService.NominateProjectAsync(_project.FullPath, restoreInfo, cancellationToken);
+                nominationSucceeded = await _solutionRestoreService.NominateProjectAsync(_project.FullPath, restoreInfo, cancellationToken);
+                return nominationSucceeded;
             }
             finally
             {
                 CodeMarkers.Instance.CodeMarker(CodeMarkerTimerId.PerfPackageRestoreEnd);
 
                 RestoreLogger.EndNominateRestore(_logger, _project.FullPath);
-                _packageReferenceTelemetryService.PostPackageRestoreEvent(PackageRestoreOperationNames.EndNominateRestore);
+                _packageReferenceTelemetryService.PostNominationCompleteEvent(nominationSucceeded);
             }
         }
 

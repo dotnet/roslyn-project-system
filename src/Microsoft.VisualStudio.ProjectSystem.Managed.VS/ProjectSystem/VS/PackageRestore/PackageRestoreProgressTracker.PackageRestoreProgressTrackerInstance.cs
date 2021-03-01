@@ -101,13 +101,13 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
             internal void OnRestoreCompleted(IProjectVersionedValue<ValueTuple<IProjectSnapshot, RestoreData>> value)
             {
-                bool isRestoreUpToDate = IsRestoreUpToDate(value.Value.Item1, value.Value.Item2);
-
-                _packageReferenceTelemetryService.PostPackageRestoreCompletedEvent(isRestoreUpToDate, _packageRestoreProgressTrackerId);
+                RestoreData restoreData = value.Value.Item2;
+                bool isRestoreUpToDate = IsRestoreUpToDate(value.Value.Item1, restoreData);
 
                 if (isRestoreUpToDate)
                 {
                     _progressRegistration!.NotifyOutputDataCalculated(value.DataSourceVersions);
+                    _packageReferenceTelemetryService.PostPackageRestoreCompletedEvent(restoreData.Succeeded, _packageRestoreProgressTrackerId);
                 }
             }
 

@@ -179,9 +179,14 @@ namespace Microsoft.VisualStudio.Telemetry
         public static readonly string PackageRestoreOperation = BuildPropertyName(TelemetryEventName.ProcessPackageRestore, "OperationName");
 
         /// <summary>
-        ///     Indicates whether package restore is up to date
+        ///     Indicates whether package restore succeeded
         /// </summary>
-        public static readonly string PackageRestoreIsUpToDate = BuildPropertyName(TelemetryEventName.ProcessPackageRestore, "RestoreIsUpToDate");
+        public static readonly string PackageRestoreSucceeded = BuildPropertyName(TelemetryEventName.ProcessPackageRestore, "RestoreSucceeded");
+
+        /// <summary>
+        ///     Indicates whether project nomination for package restore succeeded
+        /// </summary>
+        public static readonly string PackageRestoreNominationSucceeded = BuildPropertyName(TelemetryEventName.ProcessPackageRestore, "NominationSucceeded");
 
         /// <summary>
         ///     Indicates which specific language service operation triggered a telemetry event
