@@ -1,0 +1,52 @@
+﻿Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BackEndBuildTableDataSource
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BackEndBuildTableDataSource.AddEntry(Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build! build) -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BackEndBuildTableDataSource.BackEndBuildTableDataSource() -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BackEndBuildTableDataSource.BuildsUpdated -> System.EventHandler?
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BackEndBuildTableDataSource.Clear() -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BackEndBuildTableDataSource.CreateLogger(bool isDesignTime) -> Microsoft.Build.Framework.ILogger!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BackEndBuildTableDataSource.GetLogForBuild(int buildId) -> string?
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BackEndBuildTableDataSource.IsLogging.get -> bool
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BackEndBuildTableDataSource.NotifyChange() -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BackEndBuildTableDataSource.Start() -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BackEndBuildTableDataSource.Stop() -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BackEndBuildTableDataSource.SupportsRoslynLogging.get -> bool
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.Build(string! projectPath, System.Collections.Generic.IEnumerable<string?>! dimensions, System.Collections.Generic.IEnumerable<string?>? targets, Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType buildType, System.DateTime? startTime) -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.BuildId.get -> int
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.BuildSummary.get -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.BuildType.get -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.Dimensions.get -> System.Collections.Immutable.ImmutableArray<string?>
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.Dispose() -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.Elapsed.get -> System.TimeSpan?
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.Finish(bool succeeded, System.DateTime time) -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.LogPath.get -> string?
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.ProjectName.get -> string!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.ProjectPath.get -> string?
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.SetLogPath(string! logPath) -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.StartTime.get -> System.DateTime?
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.Status.get -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildStatus
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.Build.Targets.get -> System.Collections.Immutable.ImmutableArray<string?>
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BuildLoggerService
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BuildLoggerService.BuildLoggerService(Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.ILoggingDataSource! dataSource, Microsoft.VisualStudio.ProjectSystemTools.BackEnd.ILoggingController! loggingController) -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BuildLoggerService.ClearAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BuildLoggerService.DataChanged -> System.EventHandler?
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BuildLoggerService.GetAllBuildsAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<System.Collections.Immutable.ImmutableList<Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary!>!>!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BuildLoggerService.GetLogForBuildAsync(int buildID, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<string?>!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BuildLoggerService.IsLoggingAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<bool>!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BuildLoggerService.StartAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BuildLoggerService.StopAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.BuildLoggerService.SupportsRoslynLoggingAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<bool>!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.ILoggingDataSource
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.ILoggingDataSource.BuildsUpdated -> System.EventHandler!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.ILoggingDataSource.Clear() -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.ILoggingDataSource.GetAllBuilds() -> System.Collections.Immutable.ImmutableList<Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary!>!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.ILoggingDataSource.GetLogForBuild(int buildId) -> string?
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.ILoggingDataSource.Start() -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.ILoggingDataSource.Stop() -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BackEnd.ILoggingDataSource.SupportsRoslynLogging.get -> bool
+Microsoft.VisualStudio.ProjectSystemTools.BackEnd.ILoggingController
+Microsoft.VisualStudio.ProjectSystemTools.BackEnd.ILoggingController.CreateLogger(bool isDesignTime) -> Microsoft.Build.Framework.ILogger!
+Microsoft.VisualStudio.ProjectSystemTools.BackEnd.ILoggingController.IsLogging.get -> bool
+Microsoft.VisualStudio.ProjectSystemTools.BackEnd.ProfferServicePackage
+Microsoft.VisualStudio.ProjectSystemTools.BackEnd.ProfferServicePackage.ProfferServicePackage() -> void
+override Microsoft.VisualStudio.ProjectSystemTools.BackEnd.ProfferServicePackage.InitializeAsync(System.Threading.CancellationToken cancellationToken, System.IProgress<Microsoft.VisualStudio.Shell.ServiceProgressData!>! progress) -> System.Threading.Tasks.Task!

@@ -45,6 +45,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.VisualStudio.Proj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.VisualStudio.ProjectSystem.Managed.VS.Client.UnitTests", "tests\Microsoft.VisualStudio.ProjectSystem.Managed.VS.Client.UnitTests\Microsoft.VisualStudio.ProjectSystem.Managed.VS.Client.UnitTests.csproj", "{857E59F7-3FE9-4A12-A841-DFC4707C0DE5}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectSystemToolsSetup", "setup\ProjectSystemToolsSetup\ProjectSystemToolsSetup.csproj", "{FC617CB9-5B60-4BCB-BD4B-D9CF6EF45A22}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.VisualStudio.ProjectSystemTools.BackEnd", "src\Microsoft.VisualStudio.ProjectSystemTools.BackEnd\Microsoft.VisualStudio.ProjectSystemTools.BackEnd.csproj", "{34437C44-0996-479A-9EFD-5143279A944A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.VisualStudio.ProjectSystemTools.Shared", "src\Microsoft.VisualStudio.ProjectSystemTools.Shared\Microsoft.VisualStudio.ProjectSystemTools.Shared.csproj", "{DDDA26E4-CE0B-4F9A-B8A7-588E2ADD42D0}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		tests\Microsoft.VisualStudio.ProjectSystem.Managed.TestServices\Microsoft.VisualStudio.ProjectSystem.Managed.TestServices.projitems*{02578366-dfa9-4827-93f7-08e2ae5ce6a4}*SharedItemsImports = 13
@@ -119,6 +125,18 @@ Global
 		{857E59F7-3FE9-4A12-A841-DFC4707C0DE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{857E59F7-3FE9-4A12-A841-DFC4707C0DE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{857E59F7-3FE9-4A12-A841-DFC4707C0DE5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC617CB9-5B60-4BCB-BD4B-D9CF6EF45A22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC617CB9-5B60-4BCB-BD4B-D9CF6EF45A22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC617CB9-5B60-4BCB-BD4B-D9CF6EF45A22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC617CB9-5B60-4BCB-BD4B-D9CF6EF45A22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34437C44-0996-479A-9EFD-5143279A944A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34437C44-0996-479A-9EFD-5143279A944A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34437C44-0996-479A-9EFD-5143279A944A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34437C44-0996-479A-9EFD-5143279A944A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDDA26E4-CE0B-4F9A-B8A7-588E2ADD42D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDDA26E4-CE0B-4F9A-B8A7-588E2ADD42D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDDA26E4-CE0B-4F9A-B8A7-588E2ADD42D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDDA26E4-CE0B-4F9A-B8A7-588E2ADD42D0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -140,6 +158,9 @@ Global
 		{02578366-DFA9-4827-93F7-08E2AE5CE6A4} = {7349958E-C619-481F-BB2A-8A4CA2E349D9}
 		{90F64FB6-87AA-4841-A272-AD363608E17B} = {1FF0293B-6808-4BB1-8370-1FE222986654}
 		{857E59F7-3FE9-4A12-A841-DFC4707C0DE5} = {7349958E-C619-481F-BB2A-8A4CA2E349D9}
+		{FC617CB9-5B60-4BCB-BD4B-D9CF6EF45A22} = {AC8DB8AE-AC9F-4503-83C6-255B66C318C6}
+		{34437C44-0996-479A-9EFD-5143279A944A} = {1FF0293B-6808-4BB1-8370-1FE222986654}
+		{DDDA26E4-CE0B-4F9A-B8A7-588E2ADD42D0} = {1FF0293B-6808-4BB1-8370-1FE222986654}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6B652C28-D1FD-4885-A0CA-4704C54E78E7}

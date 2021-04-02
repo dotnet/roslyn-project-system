@@ -19,7 +19,10 @@
         "bin/Dlls/Microsoft.VisualStudio.AppDesigner.dll",
         "bin/Dlls/*/Microsoft.VisualStudio.AppDesigner.resources.dll",
         "bin/Dlls/Microsoft.VisualStudio.Editors.dll",
-        "bin/Dlls/*/Microsoft.VisualStudio.Editors.resources.dll"
+        "bin/Dlls/*/Microsoft.VisualStudio.Editors.resources.dll",
+        "bin/Dlls/Microsoft.VisualStudio.ProjectSystemTools.Shared.dll",
+        "bin/Dlls/Microsoft.VisualStudio.ProjectSystemTools.BackEnd.dll",
+        "bin/Dlls/*/Microsoft.VisualStudio.ProjectSystemTools.BackEnd.resources.dll"
       ]
     },
     {
@@ -28,9 +31,11 @@
       "values": [
         "VSSetup/ProjectSystem.vsix",
         "VSSetup/VisualStudioEditorsSetup.vsix",
+        "VSSetup/ProjectSystemToolsSetup.vsix",
         "VSSetup/Insertion/ProjectSystem.vsix",
         "VSSetup/Insertion/VisualStudioEditorsSetup.vsix",
-        "VSSetup/Insertion/Microsoft.VisualStudio.ProjectSystem.Managed.CommonFiles.vsix"
+        "VSSetup/Insertion/Microsoft.VisualStudio.ProjectSystem.Managed.CommonFiles.vsix",
+        "VSSetup/Insertion/ProjectSystemToolsSetup.vsix"
       ]
     },
     {

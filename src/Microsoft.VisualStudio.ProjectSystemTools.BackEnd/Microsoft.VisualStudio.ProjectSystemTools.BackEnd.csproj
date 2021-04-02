@@ -1,0 +1,55 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  
+  <Import Project="..\..\build\import\VisualStudio.props" />
+  
+  <PropertyGroup>
+    <AssemblyName>Microsoft.VisualStudio.ProjectSystemTools.BackEnd</AssemblyName>
+    <RootNamespace>Microsoft.VisualStudio.ProjectSystemTools.BackEnd</RootNamespace>
+    
+    <!-- VSIX -->
+    <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <CreateVsixContainer>false</CreateVsixContainer>
+
+    <!-- NuGet -->
+    <IsPackable>true</IsPackable>
+    <Description>Microsoft VisualStudio ProjectSystem Tools logger which interacts with extension on a VS Online scenario</Description>
+    <Summary>Microsoft VisualStudio ProjectSystem Tools logger</Summary>
+    <PackageTags>Roslyn;Managed Project System Tools;Project System Tools;VisualStudio;binlog;VSOnline;Codespaces</PackageTags>
+    <NoWarn>$(NoWarn);NU5125</NoWarn>
+
+    <IsProductComponent>false</IsProductComponent>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Microsoft.VisualStudio.ProjectSystemTools.Shared\Microsoft.VisualStudio.ProjectSystemTools.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="RoslynLogging\RoslynLoggingResources.Designer.cs">
+      <DependentUpon>RoslynLoggingResources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="BuildLoggingResources.resx">
+      <GenerateSource>true</GenerateSource>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:_GenerateResxSource</Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Update="RoslynLogging\RoslynLoggingResources.resx">
+      <SubType>Designer</SubType>
+      <LastGenOutput>RoslynLoggingResources.Designer.cs</LastGenOutput>
+      <Generator>ResXFileCodeGenerator</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+</Project>

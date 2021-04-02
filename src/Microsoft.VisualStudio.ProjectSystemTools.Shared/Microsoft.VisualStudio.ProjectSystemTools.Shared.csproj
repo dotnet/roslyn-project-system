@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\build\import\VisualStudio.props" />
+  
+  <PropertyGroup>
+    <RootNamespace>Microsoft.VisualStudio.ProjectSystemTools.Shared</RootNamespace>
+    <AssemblyName>Microsoft.VisualStudio.ProjectSystemTools.Shared</AssemblyName>
+    <IsProductComponent>false</IsProductComponent>
+    <LangVersion>latest</LangVersion>
+
+    <!-- NuGet -->
+    <IsPackable>true</IsPackable>
+    <Description>Microsoft VisualStudio ProjectSystem Tools broker to interact with extension on a VS Online scenario</Description>
+    <Summary>Microsoft VisualStudio ProjectSystem Tools broker</Summary>
+    <PackageTags>Roslyn;Managed Project System Tools;Project System Tools;VisualStudio;binlog;VSOnline;Codespaces</PackageTags>
+    <NoWarn>$(NoWarn);NU5125</NoWarn>
+    
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,34 @@
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildStatus
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildStatus.Failed = 2 -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildStatus
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildStatus.Finished = 1 -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildStatus
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildStatus.Running = 0 -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildStatus
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary.BuildId.get -> int
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary.BuildSummary(Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary! other, Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildStatus status, System.TimeSpan? elapsed) -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary.BuildSummary(int buildId, Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType buildType, System.Collections.Generic.IEnumerable<string?>! dimensions, System.Collections.Generic.IEnumerable<string?>! targets, System.DateTime startTime, System.TimeSpan elapsed, Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildStatus status, string! projectName) -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary.BuildSummary(int buildId, string! projectPath, System.Collections.Generic.IEnumerable<string?>! dimensions, System.Collections.Generic.IEnumerable<string?>? targets, Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType buildType, System.DateTime? startTime) -> void
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary.BuildType.get -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary.Dimensions.get -> System.Collections.Immutable.ImmutableArray<string?>
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary.Elapsed.get -> System.TimeSpan?
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary.ProjectName.get -> string!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary.StartTime.get -> System.DateTime?
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary.Status.get -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildStatus
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary.Targets.get -> System.Collections.Immutable.ImmutableArray<string?>
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType.All = Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType.Build | Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType.DesignTimeBuild | Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType.Evaluation | Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType.Roslyn -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType.Build = 1 -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType.DesignTimeBuild = 2 -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType.Evaluation = 4 -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType.None = 0 -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType.Roslyn = 8 -> Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildType
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.RpcContracts.IBuildLoggerService
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.RpcContracts.IBuildLoggerService.ClearAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.RpcContracts.IBuildLoggerService.DataChanged -> System.EventHandler!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.RpcContracts.IBuildLoggerService.GetAllBuildsAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<System.Collections.Immutable.ImmutableList<Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.BuildSummary!>!>!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.RpcContracts.IBuildLoggerService.GetLogForBuildAsync(int buildID, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<string?>!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.RpcContracts.IBuildLoggerService.IsLoggingAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<bool>!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.RpcContracts.IBuildLoggerService.StartAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.RpcContracts.IBuildLoggerService.StopAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.RpcContracts.IBuildLoggerService.SupportsRoslynLoggingAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<bool>!
+Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.RpcContracts.RpcDescriptors
+static Microsoft.VisualStudio.ProjectSystem.Tools.BuildLogging.Model.RpcContracts.RpcDescriptors.LoggerServiceDescriptor.get -> Microsoft.ServiceHub.Framework.ServiceRpcDescriptor!

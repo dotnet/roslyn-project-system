@@ -1,0 +1,39 @@
+﻿<!-- Licensed to the .NET Foundation under one or more agreements. The .NET Foundation licenses this file to you under the MIT license. See the LICENSE.md file in the project root for more information. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\build\import\VisualStudio.props" />
+  <PropertyGroup>
+    <RootNamespace>Microsoft.VisualStudio</RootNamespace>
+    <PublishOutputToSymStore>false</PublishOutputToSymStore>
+    
+    <!-- VSIX -->
+    <IncludeAssemblyInVSIXContainer>false</IncludeAssemblyInVSIXContainer>
+    <ExtensionInstallationRoot>CommonExtensions</ExtensionInstallationRoot>
+    <ExtensionInstallationFolder>Microsoft\VisualStudio\ProjectSystemTools</ExtensionInstallationFolder>
+
+    <!-- VS Setup -->
+    <VisualStudioInsertionComponent>Microsoft.VisualStudio.ProjectSystemTools.BackEnd</VisualStudioInsertionComponent>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Microsoft.VisualStudio.ProjectSystemTools.BackEnd\Microsoft.VisualStudio.ProjectSystemTools.BackEnd.csproj">
+      <Name>Microsoft.VisualStudio.ProjectSystemTools.BackEnd</Name>
+      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup;GetCopyToOutputDirectoryItems;SatelliteDllsProjectOutputGroup;PkgdefProjectOutputGroup</IncludeOutputGroupsInVSIX>
+      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup</IncludeOutputGroupsInVSIXLocalOnly>
+      <Ngen>true</Ngen>
+      <NgenArchitecture>All</NgenArchitecture>
+      <NgenPriority>3</NgenPriority>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\Microsoft.VisualStudio.ProjectSystemTools.Shared\Microsoft.VisualStudio.ProjectSystemTools.Shared.csproj">
+      <Name>Microsoft.VisualStudio.ProjectSystemTools.Shared</Name>
+      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup;GetCopyToOutputDirectoryItems;SatelliteDllsProjectOutputGroup</IncludeOutputGroupsInVSIX>
+      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup</IncludeOutputGroupsInVSIXLocalOnly>
+      <Ngen>true</Ngen>
+      <NgenArchitecture>All</NgenArchitecture>
+      <NgenPriority>3</NgenPriority>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Common\ProvideCodeBaseBindingRedirection.cs">
+      <Link>ProvideCodeBaseBindingRedirection.cs</Link>
+    </Compile>
+  </ItemGroup>
+</Project>

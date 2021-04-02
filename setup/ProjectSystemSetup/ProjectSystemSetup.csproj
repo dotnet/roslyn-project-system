@@ -33,6 +33,10 @@
       <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup;GetCopyToOutputDirectoryItems;SatelliteDllsProjectOutputGroup</IncludeOutputGroupsInVSIX>
       <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup</IncludeOutputGroupsInVSIXLocalOnly>
     </ProjectReference>
+    <ProjectReference Include="..\ProjectSystemToolsSetup\ProjectSystemToolsSetup.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <Private>False</Private>
+    </ProjectReference>
     <ProjectReference Include="..\VisualStudioEditorsSetup\VisualStudioEditorsSetup.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <Private>False</Private>
