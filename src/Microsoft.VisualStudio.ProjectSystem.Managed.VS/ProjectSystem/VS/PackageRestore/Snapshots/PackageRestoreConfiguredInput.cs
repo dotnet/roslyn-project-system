@@ -13,7 +13,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         {
             ProjectConfiguration = projectConfiguration;
             RestoreInfo = restoreInfo;
-            ConfiguredProjectVersion = configuredProjectVersion;
+            ConfiguredProjectVersion = (long)configuredProjectVersion;
         }
 
         /// <summary>
@@ -29,6 +29,6 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         /// <summary>
         ///     Get the project version produced in this input
         /// </summary>
-        public IComparable ConfiguredProjectVersion { get; }
+        public long ConfiguredProjectVersion { get; set; }
     }
 }

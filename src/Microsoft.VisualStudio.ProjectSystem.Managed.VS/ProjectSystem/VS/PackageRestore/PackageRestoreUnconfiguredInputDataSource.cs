@@ -216,7 +216,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         {
             // Wrap it in a data source that will drop project version and identity versions so as they will never agree
             // on these versions as they are unique to each configuration. They'll be consistent by all other versions.
-            return new DropConfiguredProjectVersionDataSource<PackageRestoreConfiguredInput>(_project, dataSource);
+            return new DropConfiguredProjectVersionDataSource2<PackageRestoreConfiguredInput>(_project, dataSource);
         }
 
         private void ReportUserFault(string message)
