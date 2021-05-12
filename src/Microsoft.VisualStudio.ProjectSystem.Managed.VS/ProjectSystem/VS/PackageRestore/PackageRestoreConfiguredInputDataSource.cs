@@ -47,7 +47,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             IProjectValueDataSource<IProjectSubscriptionUpdate> source = _projectSubscriptionService.JointRuleSource;
 
             // Transform the changes from evaluation/design-time build -> restore data
-            DisposableValue<ISourceBlock<RestoreUpdate>> transformBlock = source.SourceBlock.TransformWithNoDelta(update => update.Derive(u => CreateRestoreInput(u.ProjectConfiguration, u.CurrentState)),
+            DisposableValue<ISourceBlock<RestoreUpdate>> transformBlock = source.SourceBlock.TransformWithNoDelta(update => update.Derive(u => CreateRestoreInput(update, u.ProjectConfiguration, u.CurrentState)),
                                                                                                 suppressVersionOnlyUpdates: false,    // We need to coordinate these at the unconfigured-level
                                                                                                 ruleNames: s_rules);
 
@@ -61,11 +61,12 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             return transformBlock;
         }
 
-        private static PackageRestoreConfiguredInput CreateRestoreInput(ProjectConfiguration projectConfiguration, IImmutableDictionary<string, IProjectRuleSnapshot> update)
+        private static PackageRestoreConfiguredInput CreateRestoreInput(IProjectVersionedValue<IProjectSubscriptionUpdate> projectSubscriptionUpdate, ProjectConfiguration projectConfiguration, IImmutableDictionary<string, IProjectRuleSnapshot> update)
         {
             var restoreInfo = RestoreBuilder.ToProjectRestoreInfo(update);
+            projectSubscriptionUpdate.DataSourceVersions.TryGetValue(ProjectDataSources.ConfiguredProjectVersion, out IComparable configuredProjectVersion);
 
-            return new PackageRestoreConfiguredInput(projectConfiguration, restoreInfo);
+            return new PackageRestoreConfiguredInput(projectConfiguration, restoreInfo, configuredProjectVersion);
         }
     }
 }

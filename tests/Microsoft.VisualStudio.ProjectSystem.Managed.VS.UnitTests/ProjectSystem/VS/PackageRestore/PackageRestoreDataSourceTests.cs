@@ -2,6 +2,7 @@
 
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.IO;
+using Moq;
 using NuGet.SolutionRestoreManager;
 using Xunit;
 
@@ -93,6 +94,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             IProjectDiagnosticOutputService logger = IProjectDiagnosticOutputServiceFactory.Create();
             IFileSystem fileSystem = IFileSystemFactory.Create();
             var projectDependentFileChangeNotificationService = IProjectDependentFileChangeNotificationServiceFactory.Create();
+            var vsSolutionRestoreService4 = new Mock<IVsSolutionRestoreService4>().Object;
 
             return new PackageRestoreDataSource(
                 project,
@@ -101,7 +103,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 solutionRestoreService,
                 fileSystem,
                 logger,
-                projectDependentFileChangeNotificationService);
+                projectDependentFileChangeNotificationService,
+                vsSolutionRestoreService4);
         }
     }
 }

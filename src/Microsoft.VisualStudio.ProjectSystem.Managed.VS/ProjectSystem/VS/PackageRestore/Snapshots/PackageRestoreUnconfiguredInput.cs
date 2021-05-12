@@ -9,7 +9,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
     /// </summary>
     internal class PackageRestoreUnconfiguredInput
     {
-        public PackageRestoreUnconfiguredInput(ProjectRestoreInfo? restoreInfo, IReadOnlyCollection<PackageRestoreConfiguredInput> configuredInputs)
+        public PackageRestoreUnconfiguredInput(ProjectRestoreInfo? restoreInfo,
+            IReadOnlyCollection<PackageRestoreConfiguredInput> configuredInputs)
         {
             RestoreInfo = restoreInfo;
             ConfiguredInputs = configuredInputs;

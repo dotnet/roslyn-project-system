@@ -22,7 +22,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
     [Export(typeof(IPackageRestoreDataSource))]
     [Export(ExportContractNames.Scopes.UnconfiguredProject, typeof(IProjectDynamicLoadComponent))]
     [AppliesTo(ProjectCapability.PackageReferences)]
-    internal class PackageRestoreDataSource : ChainedProjectValueDataSourceBase<RestoreData>, IPackageRestoreDataSource, IProjectDynamicLoadComponent
+    internal class PackageRestoreDataSource : ChainedProjectValueDataSourceBase<RestoreData>, IPackageRestoreDataSource, IProjectDynamicLoadComponent, IVsProjectRestoreInfoSource
     {
         // This class represents the last data source in the package restore chain, which is made up of the following:
         //  _________________________________________      _________________________________________
@@ -62,20 +62,27 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         private readonly IFileSystem _fileSystem;
         private readonly IProjectDiagnosticOutputService _logger;
         private readonly IProjectDependentFileChangeNotificationService _projectDependentFileChangeNotificationService;
-
+        private readonly IVsSolutionRestoreService4 _solutionRestoreService4;
         private byte[]? _latestHash;
         private bool _enabled;
+        private bool _pendingNomination = true;
+        private bool _norminateNextRestore;
+        private IProjectVersionedValue<PackageRestoreUnconfiguredInput> _packageRestoreUnconfiguredInput;
+        private IReadOnlyCollection<PackageRestoreConfiguredInput> _latestConfiguredInputs;
+
+        public string Name => _project.FullPath;
 
         [ImportingConstructor]
         public PackageRestoreDataSource(
             UnconfiguredProject project,
             IPackageRestoreUnconfiguredInputDataSource dataSource,
-            [Import(ExportContractNames.Scopes.UnconfiguredProject)]IProjectAsynchronousTasksService projectAsynchronousTasksService,
+            [Import(ExportContractNames.Scopes.UnconfiguredProject)] IProjectAsynchronousTasksService projectAsynchronousTasksService,
             IVsSolutionRestoreService3 solutionRestoreService,
             IFileSystem fileSystem,
             IProjectDiagnosticOutputService logger,
-            IProjectDependentFileChangeNotificationService projectDependentFileChangeNotificationService)
-            : base(project, synchronousDisposal : true, registerDataSource : false)
+            IProjectDependentFileChangeNotificationService projectDependentFileChangeNotificationService,
+            IVsSolutionRestoreService4 solutionRestoreService4)
+            : base(project, synchronousDisposal: true, registerDataSource: false)
         {
             _project = project;
             _dataSource = dataSource;
@@ -84,6 +91,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             _fileSystem = fileSystem;
             _logger = logger;
             _projectDependentFileChangeNotificationService = projectDependentFileChangeNotificationService;
+            _solutionRestoreService4 = solutionRestoreService4;
         }
 
         protected override IDisposable? LinkExternalInput(ITargetBlock<IProjectVersionedValue<RestoreData>> targetBlock)
@@ -101,6 +109,9 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
         internal async Task<IEnumerable<IProjectVersionedValue<RestoreData>>> RestoreAsync(IProjectVersionedValue<PackageRestoreUnconfiguredInput> e)
         {
+            _packageRestoreUnconfiguredInput = e;
+            _latestConfiguredInputs = e.Value.ConfiguredInputs;
+
             // No configurations - likely during project close
             if (!_enabled || e.Value.RestoreInfo is null)
                 return Enumerable.Empty<IProjectVersionedValue<RestoreData>>();
@@ -122,9 +133,13 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             byte[] hash = RestoreHasher.CalculateHash(restoreInfo);
 
             if (_latestHash != null && Enumerable.SequenceEqual(hash, _latestHash))
+            {
+                _norminateNextRestore = false;
                 return true;
+            }
 
             _latestHash = hash;
+            _norminateNextRestore = true;
 
             JoinableTask<bool> joinableTask = JoinableFactory.RunAsync(() =>
             {
@@ -197,7 +212,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
             EnsureInitialized();
 
-            return Task.CompletedTask;
+            return _solutionRestoreService4.RegisterRestoreInfoSourceAsync(this, CancellationToken.None);
         }
 
         public Task UnloadAsync()
@@ -205,6 +220,67 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             _enabled = false;
 
             return Task.CompletedTask;
+        }
+
+        // NuGet calls this method to wait project to nominate restoring
+        // If the project has no pending restore data, it will return a completed task.
+        // Otherwise a task which will be completed once the project norminate the next restore
+        // the task will be cancelled, if the project system decide it no longer need restore (for example: the restore state has no change)
+        // the task will be failed, if the project system runs into a problem, so it cannot get correct data to norminate a restore (DT build failed)
+        public Task WhenNominated(CancellationToken cancellationToken)
+        {
+            if (_pendingNomination == false || cancellationToken.IsCancellationRequested)
+            {
+                return Task.CompletedTask;
+            }
+
+            // task which will be completed once the project norminate the next restore (_norminateNextRestore == 1)
+            JoinableTask joinableTask = JoinableFactory.RunAsync(() =>
+            {
+                while (true)
+                {
+                    if (_norminateNextRestore == true || cancellationToken.IsCancellationRequested)
+                    {
+                        return Task.CompletedTask;
+                    }
+                }
+            });
+
+            // Prevent overlap until Restore completes
+            return joinableTask.Task;
+        }
+
+        // true means the project system plans to call NominateProjectAsync in the future.
+        bool IVsProjectRestoreInfoSource.HasPendingNomination
+        {
+            get
+            {
+                _pendingNomination = checkPendingNomination(_latestConfiguredInputs);
+                return _pendingNomination;
+            }
+        }
+
+        private bool checkPendingNomination(IReadOnlyCollection<PackageRestoreConfiguredInput> latestConfiguredInputs)
+        {
+            Assumes.Present(_project.Services.ActiveConfiguredProjectProvider);
+            Assumes.Present(_project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject);
+
+            // HasPendingNomination means either it has never receive computed value from configured project yet.
+            bool neverReceivedComputedValue = latestConfiguredInputs.Count == 0 ? true : false;
+
+            // PackageRestoreDataSource can compare the version number it gets and the ConfiguredProject.Version.
+            // If the version it gets is older than the current project state, it means it is getting out of dated data.
+            // HasPendingNomination will be true.
+            ConfiguredProject? activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
+
+            bool computedDataItOutOfDate = false;
+            foreach (var input in latestConfiguredInputs)
+            {
+                computedDataItOutOfDate = string.CompareOrdinal(input.ProjectConfiguration.Name, activeConfiguredProject.ProjectConfiguration.Name) == 0 &&
+                    input.ConfiguredProjectVersion.IsLaterThan(activeConfiguredProject.ProjectVersion) ? true : computedDataItOutOfDate;
+            }
+
+            return neverReceivedComputedValue || computedDataItOutOfDate;
         }
     }
 }
