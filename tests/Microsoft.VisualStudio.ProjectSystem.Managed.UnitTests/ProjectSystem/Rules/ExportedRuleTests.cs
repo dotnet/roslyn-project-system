@@ -7,11 +7,19 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.VisualStudio.ProjectSystem.Rules
 {
     public sealed class RuleExporterTests : XamlRuleTestBase
     {
+        private readonly ITestOutputHelper _output;
+
+        public RuleExporterTests(ITestOutputHelper output)
+        {
+            _output = output;
+        }
+
         [Theory(Skip="Waiting on all rules to be embedded")]
         [MemberData(nameof(GetAllRules))]
         public void AllRulesMustBeExported(string name, string fullPath)
@@ -99,6 +107,10 @@ namespace Microsoft.VisualStudio.ProjectSystem.Rules
         public void ExportedRulesMustExist(MemberInfo member, ExportPropertyXamlRuleDefinitionAttribute attribute)
         {
             Assert.NotNull(attribute);
+
+            var message = $"{nameof(RuleExporterTests)}.{nameof(ExportedRulesMustExist)}: loading assembly {attribute.XamlResourceAssemblyName}";
+            Console.Write(message);
+            _output.WriteLine(message);
 
             // HERE BE DRAGONS
             // Note the following are *not* equivalent:

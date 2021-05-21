@@ -3,7 +3,7 @@
   <PropertyGroup>
     <!-- IMPORTANT: These assembly versions must always be 3 digits -->
     <MinimumRequiredVSVersion>16.8.1</MinimumRequiredVSVersion> <!-- We should try to keep this up to date with the highest version available on build machines -->
-    <ProjectSystemVersion>16.10.0</ProjectSystemVersion> <!-- This should always match with the VS release we're targeting -->
+    <ProjectSystemVersion>16.10</ProjectSystemVersion> <!-- This should always match with the VS release we're targeting -->
     <VersionBase>$(ProjectSystemVersion)</VersionBase>
     <PreReleaseVersionLabel>beta1</PreReleaseVersionLabel>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
