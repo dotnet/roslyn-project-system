@@ -65,10 +65,10 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         private readonly IVsSolutionRestoreService4 _solutionRestoreService4;
         private byte[]? _latestHash;
         private bool _enabled;
-        private bool _pendingNomination = true;
-        private bool _norminateNextRestore;
-        private IProjectVersionedValue<PackageRestoreUnconfiguredInput> _packageRestoreUnconfiguredInput;
-        private IReadOnlyCollection<PackageRestoreConfiguredInput> _latestConfiguredInputs;
+        private bool _hasPendingNomination = true;
+        // This indicates that we have a project nominated to restore
+        private IReadOnlyCollection<PackageRestoreConfiguredInput>? _latestConfiguredInputs;
+        private readonly AutoResetEvent _nominateNextRestore = new AutoResetEvent(false);
 
         public string Name => _project.FullPath;
 
@@ -134,12 +134,11 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
             if (_latestHash != null && Enumerable.SequenceEqual(hash, _latestHash))
             {
-                _norminateNextRestore = false;
                 return true;
             }
 
             _latestHash = hash;
-            _norminateNextRestore = true;
+            _nominateNextRestore.Set();
 
             JoinableTask<bool> joinableTask = JoinableFactory.RunAsync(() =>
             {
@@ -152,6 +151,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
             // Prevent overlap until Restore completes
             bool success = await joinableTask;
+
+            _nominateNextRestore.Reset();
 
             HintProjectDependentFile(restoreInfo);
 
@@ -234,17 +235,19 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 return Task.CompletedTask;
             }
 
-            // task which will be completed once the project norminate the next restore (_norminateNextRestore == 1)
-            JoinableTask joinableTask = JoinableFactory.RunAsync(() =>
-            {
-                while (true)
-                {
-                    if (_norminateNextRestore == true || cancellationToken.IsCancellationRequested)
+            TaskCompletionSource<Task> taskCompletionSource = new TaskCompletionSource<Task>();
+            Task<Task> tcs1 = taskCompletionSource.Task;
+
+            // Start a background task that will complete tcs1.Task
+            TaskScheduler uiScheduler = TaskScheduler.FromCurrentSynchronizationContext();
+            _ = Task.Factory.StartNew((Action)(() =>
                     {
-                        return Task.CompletedTask;
-                    }
-                }
-            });
+                        _nominateNextRestore.WaitOne();
+                        taskCompletionSource.SetResult(Task.CompletedTask);
+                    }),
+                cancellationToken,
+                TaskCreationOptions.None,
+                uiScheduler);
 
             // Prevent overlap until Restore completes
             return joinableTask.Task;
@@ -260,13 +263,16 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             }
         }
 
-        private bool checkPendingNomination(IReadOnlyCollection<PackageRestoreConfiguredInput> latestConfiguredInputs)
+        private bool checkPendingNomination(IReadOnlyCollection<PackageRestoreConfiguredInput>? latestConfiguredInputs)
         {
             Assumes.Present(_project.Services.ActiveConfiguredProjectProvider);
             Assumes.Present(_project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject);
 
             // HasPendingNomination means either it has never receive computed value from configured project yet.
-            bool neverReceivedComputedValue = latestConfiguredInputs.Count == 0 ? true : false;
+            if (latestConfiguredInputs == null || latestConfiguredInputs.Count == 0)
+            {
+                return true;
+            }
 
             // PackageRestoreDataSource can compare the version number it gets and the ConfiguredProject.Version.
             // If the version it gets is older than the current project state, it means it is getting out of dated data.
@@ -280,7 +286,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                     input.ConfiguredProjectVersion.IsLaterThan(activeConfiguredProject.ProjectVersion) ? true : computedDataItOutOfDate;
             }
 
-            return neverReceivedComputedValue || computedDataItOutOfDate;
+            return computedDataItOutOfDate;
         }
     }
 }
