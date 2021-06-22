@@ -66,24 +66,25 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         private byte[]? _latestHash;
         private bool _enabled;
 
-        private readonly Dictionary<string, IComparable> _savedNominatedVersion = new ();
-        private readonly AsyncManualResetEvent _nominateNextRestore = new(false);
-
+        /// <summary>
+        /// Project Unique Name used by Nuget Nomination.
+        /// </summary>
         public string Name => _project.FullPath;
 
-        public bool FirstNominationOcurred
-        {
-            get
-            {
-                Assumes.Present(_project.Services.ActiveConfiguredProjectProvider);
-                Assumes.Present(_project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject);
+        /// <summary>
+        /// Re-usable task that completes when there is a new nomination
+        /// </summary>
+        private TaskCompletionSource<bool>? _whenNominatedTask;
 
-                ConfiguredProject? activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
+        /// <summary>
+        /// Save the configured project versions that might get nominations.
+        /// </summary>
+        private readonly Dictionary<ProjectConfiguration, IComparable> _savedNominatedVersion = new();
 
-                // Nuget should wait until the project at least nominates once.
-                return _savedNominatedVersion.ContainsKey(activeConfiguredProject.ProjectConfiguration.Name);
-            }
-        }
+        /// <summary>
+        /// Object used to synchronize access to IVsProjectRestoreInfoSource.
+        /// </summary>
+        private readonly object _object = new();
 
         [ImportingConstructor]
         public PackageRestoreDataSource(
@@ -109,13 +110,12 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
         protected override IDisposable? LinkExternalInput(ITargetBlock<IProjectVersionedValue<RestoreData>> targetBlock)
         {
-            JoinableTask joinableTask = JoinableFactory.RunAsync(() =>
-            {
-                // We should register before any nuget restore or before the solution load.
-                return _solutionRestoreService4.RegisterRestoreInfoSourceAsync(this, CancellationToken.None);
-            });
-
-            joinableTask.Join();
+            // Register before this project receives any data flows containing possible nominations.
+            // This is needed because we need to register before any nuget restore or before the solution load.
+            _project.Services.FaultHandler.Forget(
+                _solutionRestoreService4.RegisterRestoreInfoSourceAsync(this, _projectAsynchronousTasksService.UnloadCancellationToken), 
+                _project, 
+                ProjectFaultSeverity.LimitedFunctionality);
 
             JoinUpstreamDataSources(_dataSource);
 
@@ -154,16 +154,18 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
             if (_latestHash != null && Enumerable.SequenceEqual(hash, _latestHash))
             {
+                SaveNominatedConfiguredVersions(value.ConfiguredInputs);
                 return true;
             }
 
-            SaveNominatedConfiguredVersions(value.ConfiguredInputs);
             _latestHash = hash;
 
             JoinableTask<bool> joinableTask = JoinableFactory.RunAsync(() =>
             {
                 return NominateForRestoreAsync(restoreInfo, _projectAsynchronousTasksService.UnloadCancellationToken);
             });
+
+            SaveNominatedConfiguredVersions(value.ConfiguredInputs);
 
             _projectAsynchronousTasksService.RegisterAsyncTask(joinableTask,
                                                                ProjectCriticalOperation.Build | ProjectCriticalOperation.Unload | ProjectCriticalOperation.Rename,
@@ -179,35 +181,19 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
         private void SaveNominatedConfiguredVersions(IReadOnlyCollection<PackageRestoreConfiguredInput> configuredInputs)
         {
-            Assumes.Present(_project.Services.ActiveConfiguredProjectProvider);
-            Assumes.Present(_project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject);
-
-            _nominateNextRestore.Set();
-
-            ConfiguredProject activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
-
-            // Delete non existing configured projects from _savedNominatedVersion
-            foreach (var configuredInput in configuredInputs)
+            lock (_object)
             {
-                // Only save the active configured project version that gets nominated
-                if (string.Compare(configuredInput.ProjectConfiguration.Name, activeConfiguredProject.ProjectConfiguration.Name, StringComparisons.ConfigurationDimensionNames) == 0)
+                _savedNominatedVersion.Clear();
+
+                foreach (var configuredInput in configuredInputs)
                 {
-                    _savedNominatedVersion[configuredInput.ProjectConfiguration.Name] = configuredInput.ConfiguredProjectVersion;
+                    _savedNominatedVersion[configuredInput.ProjectConfiguration] = configuredInput.ConfiguredProjectVersion;
                 }
-            }
 
-            CleanUpSavedConfiguredProjectVersions(configuredInputs);
-        }
-
-        private void CleanUpSavedConfiguredProjectVersions(IReadOnlyCollection<PackageRestoreConfiguredInput> configuredInputs)
-        {
-            foreach (string configuredProject in _savedNominatedVersion.Keys)
-            {
-                var output = configuredInputs.FirstOrDefault(a => string.Compare(a.ProjectConfiguration.Name, configuredProject,
-                    StringComparisons.ConfigurationDimensionNames) == 0);
-                if (output is null)
+                if (_whenNominatedTask is not null)
                 {
-                    _savedNominatedVersion.Remove(configuredProject);
+                    // is nominate done ? we need to check if this in an older version
+                    _whenNominatedTask.SetResult(true);
                 }
             }
         }
@@ -288,59 +274,46 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 return Task.CompletedTask;
             }
 
-            TaskCompletionSource<Task> taskCompletionSource = new TaskCompletionSource<Task>(TaskCreationOptions.RunContinuationsAsynchronously);
-            Task<Task> tcs1 = taskCompletionSource.Task;
+            _whenNominatedTask ??= new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-            // Start a background task that will complete tcs1.Task
-            TaskScheduler uiScheduler = TaskScheduler.FromCurrentSynchronizationContext();
-            _ = Task.Factory.StartNew((Action)(async () =>
-                    {
-                        await _nominateNextRestore.WaitAsync();
-                        taskCompletionSource.SetResult(Task.CompletedTask);
-                    }),
-                cancellationToken,
-                TaskCreationOptions.None,
-                uiScheduler);
-
-            // Prevent overlap until Restore completes
-            return joinableTask.Task;
+            return _whenNominatedTask.Task.WithCancellation(cancellationToken);
         }
 
         // True means the project system plans to call NominateProjectAsync in the future.
         bool IVsProjectRestoreInfoSource.HasPendingNomination
         {
-            get
-            {
-                return CheckIfHasPendingNomination();
-            }
+            get => CheckIfHasPendingNomination();
         }
 
         private bool CheckIfHasPendingNomination()
         {
-            Assumes.Present(_project.Services.ActiveConfiguredProjectProvider);
-            Assumes.Present(_project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject);
-
-            ConfiguredProject? activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
-
-            // Nuget should wait until the project at least nominates once.
-            if (!_savedNominatedVersion.ContainsKey(activeConfiguredProject.ProjectConfiguration.Name))
+            lock (_object)
             {
-                return true;
-            }
+                Assumes.Present(_project.Services.ActiveConfiguredProjectProvider);
+                Assumes.Present(_project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject);
 
-            // Nuget should not wait for projects that failed DTB
-            if (SourceBlock.Completion.IsFaulted || SourceBlock.Completion.IsCompleted)
-            {
-                return false;
-            }
+                ConfiguredProject? activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
 
-            // After the first nomination, we should check the saved nominated version
-            return CheckIfSavedNominationEmptyOrOlder(activeConfiguredProject);
+                // Nuget should wait until the project at least nominates once.
+                if (!_savedNominatedVersion.ContainsKey(activeConfiguredProject.ProjectConfiguration))
+                {
+                    return true;
+                }
+
+                // Nuget should not wait for projects that failed DTB
+                if (SourceBlock.Completion.IsFaulted || SourceBlock.Completion.IsCompleted)
+                {
+                    return false;
+                }
+
+                // After the first nomination, we should check the saved nominated version
+                return CheckIfSavedNominationEmptyOrOlder(activeConfiguredProject);
+            }
         }
 
         private bool CheckIfSavedNominationEmptyOrOlder(ConfiguredProject activeConfiguredProject)
         {
-            if (!_savedNominatedVersion.TryGetValue(activeConfiguredProject.ProjectConfiguration.Name,
+            if (!_savedNominatedVersion.TryGetValue(activeConfiguredProject.ProjectConfiguration,
                 out IComparable latestConfiguredProjectVersion))
             {
                 return true;
@@ -349,6 +322,14 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             if (latestConfiguredProjectVersion.IsLaterThan(activeConfiguredProject.ProjectVersion))
             {
                 return true;
+            }
+
+            foreach(var x in activeConfiguredProject.UnconfiguredProject.LoadedConfiguredProjects)
+            {
+                if (latestConfiguredProjectVersion.IsLaterThan(x.ProjectVersion))
+                {
+                    return true;
+                }
             }
 
             return false;
