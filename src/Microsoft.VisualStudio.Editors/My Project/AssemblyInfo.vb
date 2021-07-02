@@ -59,9 +59,7 @@ Imports System.Runtime.InteropServices
 <Assembly: TypeForwardedTo(GetType(Microsoft.VisualStudio.Editors.ApplicationDesigner.ApplicationDesignerPanel))>
 <Assembly: TypeForwardedTo(GetType(Microsoft.VisualStudio.Editors.ApplicationDesigner.ApplicationDesignerRootComponent))>
 <Assembly: TypeForwardedTo(GetType(Microsoft.VisualStudio.Editors.ApplicationDesigner.ApplicationDesignerRootDesigner))>
-#Disable Warning RS0026 ' Do not add multiple public overloads with optional parameters
 <Assembly: TypeForwardedTo(GetType(Microsoft.VisualStudio.Editors.ApplicationDesigner.ApplicationDesignerView))>
-#Enable Warning RS0026 ' Do not add multiple public overloads with optional parameters
 <Assembly: TypeForwardedTo(GetType(Microsoft.VisualStudio.Editors.ApplicationDesigner.ApplicationDesignerWindowPane))>
 <Assembly: TypeForwardedTo(GetType(Microsoft.VisualStudio.Editors.ApplicationDesigner.ApplicationDesignerWindowPaneControl))>
 <Assembly: TypeForwardedTo(GetType(Microsoft.VisualStudio.Editors.ApplicationDesigner.CmdTargetHelper))>

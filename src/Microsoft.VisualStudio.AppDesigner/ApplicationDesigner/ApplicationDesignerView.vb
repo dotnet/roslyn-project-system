@@ -1167,13 +1167,11 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
         ''' <param name="DefaultButton">Which button should be default?</param>
         ''' <param name="HelpLink">The help link</param>
         ''' <returns>One of the DialogResult values</returns>
-#Disable Warning RS0026 ' Do not add multiple public overloads with optional parameters
         Public Function DsMsgBox(Message As String,
                 Buttons As MessageBoxButtons,
                 Icon As MessageBoxIcon,
                 Optional DefaultButton As MessageBoxDefaultButton = MessageBoxDefaultButton.Button1,
                 Optional HelpLink As String = Nothing) As DialogResult
-#Enable Warning RS0026 ' Do not add multiple public overloads with optional parameters
 
             Debug.Assert(_serviceProvider IsNot Nothing)
             Return AppDesDesignerFramework.DesignerMessageBox.Show(_serviceProvider, Message, _messageBoxCaption,
@@ -1185,10 +1183,8 @@ Namespace Microsoft.VisualStudio.Editors.ApplicationDesigner
         ''' </summary>
         ''' <param name="ex">The exception whose text should be displayed.</param>
         ''' <param name="HelpLink">The help link</param>
-#Disable Warning RS0026 ' Do not add multiple public overloads with optional parameters
         Public Sub DsMsgBox(ex As Exception,
                 Optional HelpLink As String = Nothing) Implements IPropertyPageSiteOwner.DsMsgBox
-#Enable Warning RS0026 ' Do not add multiple public overloads with optional parameters
 
             Debug.Assert(_serviceProvider IsNot Nothing)
             AppDesDesignerFramework.DesignerMessageBox.Show(_serviceProvider, ex, _messageBoxCaption, HelpLink:=HelpLink)

@@ -300,18 +300,18 @@ Namespace Microsoft.VisualStudio.Editors.Common
         ''' <summary>
         ''' Uses String.Format if there are arguments, otherwise simply returns the string.
         ''' </summary>
-        ''' <param name="Message"></param>
-        ''' <param name="FormatArguments"></param>
-        Private Shared Function Format(Message As String, ParamArray FormatArguments() As Object) As String
-            If FormatArguments Is Nothing OrElse FormatArguments.Length = 0 Then
-                Return Message
+        ''' <param name="message"></param>
+        ''' <param name="formatArguments"></param>
+        Private Shared Function Format(message As String, ParamArray formatArguments() As Object) As String
+            If formatArguments Is Nothing OrElse formatArguments.Length = 0 Then
+                Return message
             Else
                 Try
-                    Return String.Format(Message, FormatArguments)
+                    Return String.Format(message, formatArguments)
                 Catch ex As FormatException
                     'If there was an exception trying to format (e.g., the Message contained the {} characters), just
                     '  return the string - this stuff is only for debug 
-                    Return Message
+                    Return message
                 End Try
             End If
 
