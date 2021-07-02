@@ -130,6 +130,14 @@
     </StringProperty.DataSource>
   </StringProperty>
 
+  <StringProperty Name="LogicalName"
+                  Visible="false" />
+
+  <StringProperty Name="ManifestResourceName"
+                  Category="Advanced"
+                  Description="The base name of the embedded resource within the assembly's manifest."
+                  DisplayName="Manifest Resource Name" />
+  
   <EnumProperty Name="SubType"
                 Visible="false">
     <EnumProperty.DataSource>

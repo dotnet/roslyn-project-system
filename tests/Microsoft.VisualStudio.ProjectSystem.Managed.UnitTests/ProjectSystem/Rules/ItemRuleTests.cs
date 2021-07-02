@@ -49,14 +49,20 @@ namespace Microsoft.VisualStudio.ProjectSystem.Rules
         public void BrowseObjectRulesShouldMatchNone(string ruleName, string fullPath)
         {
             // Special case for Folder rule which hasn't been split yet, but is in the Items folder. But also its completely different.
-            if (ruleName.Equals("Folder", StringComparison.Ordinal))
+            if (ruleName.Equals("Folder.BrowseObject", StringComparison.Ordinal))
             {
                 return;
             }
             // No need to check None against None
-            if (ruleName.Equals("None", StringComparison.Ordinal))
+            if (ruleName.Equals("None.BrowseObject", StringComparison.Ordinal))
             {
                 return;
+            }
+
+            string[] excludedElements = Array.Empty<string>();
+            if (ruleName.Equals("EmbeddedResource.BrowseObject", StringComparison.Ordinal))
+            {
+                excludedElements = new[] { "LogicalName", "ManifestResourceName" };
             }
 
             string noneFile = Path.Combine(fullPath, "..", "None.BrowseObject.xaml");
@@ -67,6 +73,18 @@ namespace Microsoft.VisualStudio.ProjectSystem.Rules
             // First fix up the Name and DisplayName as we know they'll differ.
             rule.Attribute("Name").Value = "None";
             rule.Attribute("DisplayName").Value = "General";
+
+            var elementsToRemove = new List<XElement>();
+
+            foreach (var element in rule.Elements())
+            {
+                if (excludedElements.Contains(element.Attribute("Name")?.Value))
+                {
+                    elementsToRemove.Add(element);
+                }
+            }
+
+            elementsToRemove.ForEach(element => element.Remove());
 
             AssertXmlEqual(none, rule);
         }

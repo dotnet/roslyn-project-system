@@ -97,6 +97,16 @@
         <target state="translated">파일 또는 폴더의 이름입니다.</target>
         <note />
       </trans-unit>
+      <trans-unit id="StringProperty|ManifestResourceName|Description">
+        <source>The base name of the embedded resource within the assembly's manifest.</source>
+        <target state="new">The base name of the embedded resource within the assembly's manifest.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="StringProperty|ManifestResourceName|DisplayName">
+        <source>Manifest Resource Name</source>
+        <target state="new">Manifest Resource Name</target>
+        <note />
+      </trans-unit>
     </body>
   </file>
 </xliff>
