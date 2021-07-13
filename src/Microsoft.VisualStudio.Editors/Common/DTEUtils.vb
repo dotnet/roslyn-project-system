@@ -113,9 +113,15 @@ Namespace Microsoft.VisualStudio.Editors.Common
         ''' </summary>
         ''' <param name="PropertyName">The name of the property to retrieve.</param>
         Public Shared Function GetProjectItemProperty(ProjectItem As ProjectItem, PropertyName As String) As [Property]
-            If ProjectItem.Properties Is Nothing Then
+            Try
+                If ProjectItem.Properties Is Nothing Then
+                    Return Nothing
+                End If
+            Catch ex As KeyNotFoundException
+                ' The issue is a limitation in CPS. The main cause is that CPS, in some cases,
+                ' it is not able to maintain the same item id for items, causing them to not be found
                 Return Nothing
-            End If
+            End Try
 
             For Each Prop As [Property] In ProjectItem.Properties
                 If Prop.Name.Equals(PropertyName, StringComparison.OrdinalIgnoreCase) Then
