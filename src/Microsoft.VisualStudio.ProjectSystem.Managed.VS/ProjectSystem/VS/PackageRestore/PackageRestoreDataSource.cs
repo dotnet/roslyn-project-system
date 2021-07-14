@@ -292,6 +292,11 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 Assumes.Present(_project.Services.ActiveConfiguredProjectProvider);
                 Assumes.Present(_project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject);
 
+                if (SourceBlock.Completion.IsFaulted)
+                {
+                    return false;
+                }
+
                 ConfiguredProject? activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
 
                 // Nuget should wait until the project at least nominates once.
@@ -301,7 +306,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 }
 
                 // Nuget should not wait for projects that failed DTB
-                if (SourceBlock.Completion.IsFaulted || SourceBlock.Completion.IsCompleted)
+                if (SourceBlock.Completion.IsCompleted)
                 {
                     return false;
                 }
