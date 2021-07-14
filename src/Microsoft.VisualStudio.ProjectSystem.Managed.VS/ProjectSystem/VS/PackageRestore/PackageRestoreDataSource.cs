@@ -81,11 +81,6 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         /// </summary>
         private readonly Dictionary<ProjectConfiguration, IComparable> _savedNominatedVersion = new();
 
-        /// <summary>
-        /// Object used to synchronize access to IVsProjectRestoreInfoSource.
-        /// </summary>
-        private readonly object _object = new();
-
         [ImportingConstructor]
         public PackageRestoreDataSource(
             UnconfiguredProject project,
@@ -150,7 +145,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
             // Restore service always does work regardless of whether the value we pass 
             // them to actually contains changes, only nominate if there are any.
-            byte[] hash = RestoreHasher.CalculateHash(restoreInfo);
+            byte[] hash = RestoreHasher.CalculateHash(restoreInfo!);
 
             if (_latestHash != null && Enumerable.SequenceEqual(hash, _latestHash))
             {
@@ -162,7 +157,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
             JoinableTask<bool> joinableTask = JoinableFactory.RunAsync(() =>
             {
-                return NominateForRestoreAsync(restoreInfo, _projectAsynchronousTasksService.UnloadCancellationToken);
+                return NominateForRestoreAsync(restoreInfo!, _projectAsynchronousTasksService.UnloadCancellationToken);
             });
 
             SaveNominatedConfiguredVersions(value.ConfiguredInputs);
@@ -174,14 +169,14 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             // Prevent overlap until Restore completes
             bool success = await joinableTask;
 
-            HintProjectDependentFile(restoreInfo);
+            HintProjectDependentFile(restoreInfo!);
 
             return success;
         }
 
         private void SaveNominatedConfiguredVersions(IReadOnlyCollection<PackageRestoreConfiguredInput> configuredInputs)
         {
-            lock (_object)
+            lock (SyncObject)
             {
                 _savedNominatedVersion.Clear();
 
@@ -269,12 +264,15 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         // the task will be failed, if the project system runs into a problem, so it cannot get correct data to nominate a restore (DT build failed)
         public Task WhenNominated(CancellationToken cancellationToken)
         {
-            if (!CheckIfHasPendingNomination() || cancellationToken.IsCancellationRequested)
+            lock (SyncObject)
             {
-                return Task.CompletedTask;
-            }
+                if (!CheckIfHasPendingNomination() || cancellationToken.IsCancellationRequested)
+                {
+                    return Task.CompletedTask;
+                }
 
-            _whenNominatedTask ??= new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                _whenNominatedTask ??= new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            }
 
             return _whenNominatedTask.Task.WithCancellation(cancellationToken);
         }
@@ -287,7 +285,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
         private bool CheckIfHasPendingNomination()
         {
-            lock (_object)
+            lock (SyncObject)
             {
                 Assumes.Present(_project.Services.ActiveConfiguredProjectProvider);
                 Assumes.Present(_project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject);
