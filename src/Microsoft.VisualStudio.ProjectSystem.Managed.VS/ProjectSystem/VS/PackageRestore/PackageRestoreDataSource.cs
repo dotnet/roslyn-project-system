@@ -143,6 +143,12 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         {
             ProjectRestoreInfo? restoreInfo = value.RestoreInfo;
 
+            // Prevent extra restore under some conditions.
+            if (IsProjectConfigurationVersionOutOfDate(value.ConfiguredInputs))
+            {
+                return false;
+            }
+
             // Restore service always does work regardless of whether the value we pass 
             // them to actually contains changes, only nominate if there are any.
             byte[] hash = RestoreHasher.CalculateHash(restoreInfo!);
@@ -172,6 +178,31 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             HintProjectDependentFile(restoreInfo!);
 
             return success;
+        }
+
+        private bool IsProjectConfigurationVersionOutOfDate(IReadOnlyCollection<PackageRestoreConfiguredInput> configuredInputs)
+        {
+            Assumes.Present(_project.Services.ActiveConfiguredProjectProvider);
+            Assumes.Present(_project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject);
+
+            var activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
+
+            if (!_savedNominatedVersion.TryGetValue(activeConfiguredProject.ProjectConfiguration, out IComparable savedVersionOfActiveConfiguration))
+            {
+                return false;
+            }
+
+            // Nuget only cares about the active configuration
+            foreach (var configuredInput in configuredInputs)
+            {
+                if (configuredInput.ProjectConfiguration.Equals(activeConfiguredProject.ProjectConfiguration) &&
+                    configuredInput.ConfiguredProjectVersion.IsLaterThanOrEqualTo(savedVersionOfActiveConfiguration))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void SaveNominatedConfiguredVersions(IReadOnlyCollection<PackageRestoreConfiguredInput> configuredInputs)
@@ -327,9 +358,9 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 return true;
             }
 
-            foreach(var x in activeConfiguredProject.UnconfiguredProject.LoadedConfiguredProjects)
+            foreach(var loadedProject in activeConfiguredProject.UnconfiguredProject.LoadedConfiguredProjects)
             {
-                if (latestConfiguredProjectVersion.IsLaterThan(x.ProjectVersion))
+                if (latestConfiguredProjectVersion.IsLaterThan(loadedProject.ProjectVersion))
                 {
                     return true;
                 }
