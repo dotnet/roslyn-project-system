@@ -75,6 +75,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         /// Re-usable task that completes when there is a new nomination
         /// </summary>
         private TaskCompletionSource<bool>? _whenNominatedTask;
+        private bool _nugetRestoreStarted;
 
         /// <summary>
         /// Save the configured project versions that might get nominations.
@@ -161,6 +162,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
             _latestHash = hash;
 
+            _nugetRestoreStarted = true;
             JoinableTask<bool> joinableTask = JoinableFactory.RunAsync(() =>
             {
                 return NominateForRestoreAsync(restoreInfo!, _projectAsynchronousTasksService.UnloadCancellationToken);
@@ -174,6 +176,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
             // Prevent overlap until Restore completes
             bool success = await joinableTask;
+
+            _nugetRestoreStarted = false;
 
             HintProjectDependentFile(restoreInfo!);
 
@@ -218,7 +222,6 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
                 if (_whenNominatedTask is not null)
                 {
-                    // is nominate done ? we need to check if this in an older version
                     _whenNominatedTask.SetResult(true);
                 }
             }
@@ -326,6 +329,14 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                     return false;
                 }
 
+                // Avoid possible deadlock.
+                // Because RestoreCoreAsync() is called inside a dataflow block it will not be called with new data
+                // until the old task finishes. So, if the project gets nominating restore, it will not get updated data.
+                if (IsNugetRestoreFinished())
+                {
+                    return false;
+                }
+
                 ConfiguredProject? activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
 
                 // Nuget should wait until the project at least nominates once.
@@ -343,6 +354,12 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 // After the first nomination, we should check the saved nominated version
                 return CheckIfSavedNominationEmptyOrOlder(activeConfiguredProject);
             }
+        }
+
+        private bool IsNugetRestoreFinished()
+        {
+            // TODO : if NominateForRestoreAsync() has not finished, return false
+            return !_nugetRestoreStarted;
         }
 
         private bool CheckIfSavedNominationEmptyOrOlder(ConfiguredProject activeConfiguredProject)
