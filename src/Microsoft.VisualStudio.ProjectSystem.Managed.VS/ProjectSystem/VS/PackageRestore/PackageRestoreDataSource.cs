@@ -79,7 +79,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         /// <summary>
         /// Save the configured project versions that might get nominations.
         /// </summary>
-        private readonly Dictionary<ProjectConfiguration, IComparable> _savedNominatedVersion = new();
+        private readonly Dictionary<ProjectConfiguration, IComparable> _savedNominatedConfiguredVersion = new();
 
         [ImportingConstructor]
         public PackageRestoreDataSource(
@@ -187,7 +187,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
             var activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
 
-            if (!_savedNominatedVersion.TryGetValue(activeConfiguredProject.ProjectConfiguration, out IComparable savedVersionOfActiveConfiguration))
+            if (!_savedNominatedConfiguredVersion.TryGetValue(activeConfiguredProject.ProjectConfiguration, out IComparable savedVersionOfActiveConfiguration))
             {
                 return false;
             }
@@ -209,11 +209,11 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         {
             lock (SyncObject)
             {
-                _savedNominatedVersion.Clear();
+                _savedNominatedConfiguredVersion.Clear();
 
                 foreach (var configuredInput in configuredInputs)
                 {
-                    _savedNominatedVersion[configuredInput.ProjectConfiguration] = configuredInput.ConfiguredProjectVersion;
+                    _savedNominatedConfiguredVersion[configuredInput.ProjectConfiguration] = configuredInput.ConfiguredProjectVersion;
                 }
 
                 if (_whenNominatedTask is not null)
@@ -329,7 +329,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 ConfiguredProject? activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
 
                 // Nuget should wait until the project at least nominates once.
-                if (!_savedNominatedVersion.ContainsKey(activeConfiguredProject.ProjectConfiguration))
+                if (!_savedNominatedConfiguredVersion.ContainsKey(activeConfiguredProject.ProjectConfiguration))
                 {
                     return true;
                 }
@@ -347,7 +347,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
         private bool CheckIfSavedNominationEmptyOrOlder(ConfiguredProject activeConfiguredProject)
         {
-            if (!_savedNominatedVersion.TryGetValue(activeConfiguredProject.ProjectConfiguration,
+            if (!_savedNominatedConfiguredVersion.TryGetValue(activeConfiguredProject.ProjectConfiguration,
                 out IComparable latestConfiguredProjectVersion))
             {
                 return true;
