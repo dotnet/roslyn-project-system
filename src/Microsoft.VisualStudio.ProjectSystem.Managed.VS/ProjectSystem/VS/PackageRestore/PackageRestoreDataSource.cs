@@ -308,7 +308,24 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 _whenNominatedTask ??= new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             }
 
-            return _whenNominatedTask.Task.WithCancellation(cancellationToken);
+            var continuationTask = _whenNominatedTask.Task.ContinueWith(t =>
+            {
+                lock (SyncObject)
+                {
+                    if (t.IsFaulted)
+                    {
+                        _whenNominatedTask.SetException(t.Exception);
+                    }
+                    else
+                    {
+                        _whenNominatedTask.TrySetCanceled();
+                    }
+                }
+            }, cancellationToken,
+            TaskContinuationOptions.OnlyOnFaulted,
+            TaskScheduler.Default);
+
+            return continuationTask;
         }
 
         // True means the project system plans to call NominateProjectAsync in the future.
@@ -352,7 +369,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 }
 
                 // After the first nomination, we should check the saved nominated version
-                return CheckIfSavedNominationEmptyOrOlder(activeConfiguredProject);
+                return IsSavedNominationEmptyOrOlder(activeConfiguredProject);
             }
         }
 
@@ -362,24 +379,27 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             return !_nugetRestoreStarted;
         }
 
-        private bool CheckIfSavedNominationEmptyOrOlder(ConfiguredProject activeConfiguredProject)
+        private bool IsSavedNominationEmptyOrOlder(ConfiguredProject activeConfiguredProject)
         {
             if (!_savedNominatedConfiguredVersion.TryGetValue(activeConfiguredProject.ProjectConfiguration,
-                out IComparable latestConfiguredProjectVersion))
+                out IComparable latestSavedVersionForActiveConfiguredProject))
             {
                 return true;
             }
 
-            if (latestConfiguredProjectVersion.IsLaterThan(activeConfiguredProject.ProjectVersion))
+            if (latestSavedVersionForActiveConfiguredProject.IsLaterThan(activeConfiguredProject.ProjectVersion))
             {
                 return true;
             }
 
             foreach(var loadedProject in activeConfiguredProject.UnconfiguredProject.LoadedConfiguredProjects)
             {
-                if (latestConfiguredProjectVersion.IsLaterThan(loadedProject.ProjectVersion))
+                if (_savedNominatedConfiguredVersion.TryGetValue(loadedProject.ProjectConfiguration, out IComparable savedProjectVersion))
                 {
-                    return true;
+                    if (savedProjectVersion.IsLaterThan(loadedProject.ProjectVersion))
+                    {
+                        return true;
+                    }
                 }
             }
 
