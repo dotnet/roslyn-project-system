@@ -223,6 +223,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 if (_whenNominatedTask is not null)
                 {
                     _whenNominatedTask.SetResult(true);
+                    _whenNominatedTask = null;
                 }
             }
         }
@@ -305,27 +306,30 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                     return Task.CompletedTask;
                 }
 
-                _whenNominatedTask ??= new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                if (_whenNominatedTask is null)
+                {
+                    _whenNominatedTask = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                    _ = SourceBlock.Completion.ContinueWith(t =>
+                    {
+                        lock (SyncObject)
+                        {
+                            if (t.IsFaulted)
+                            {
+                                _whenNominatedTask.SetException(t.Exception);
+                            }
+                            else
+                            {
+                                _whenNominatedTask.TrySetCanceled();
+                            }
+                        }
+                    }, cancellationToken,
+                       TaskContinuationOptions.OnlyOnFaulted,
+                       TaskScheduler.Default);
+                }
             }
 
-            var continuationTask = _whenNominatedTask.Task.ContinueWith(t =>
-            {
-                lock (SyncObject)
-                {
-                    if (t.IsFaulted)
-                    {
-                        _whenNominatedTask.SetException(t.Exception);
-                    }
-                    else
-                    {
-                        _whenNominatedTask.TrySetCanceled();
-                    }
-                }
-            }, cancellationToken,
-            TaskContinuationOptions.OnlyOnFaulted,
-            TaskScheduler.Default);
-
-            return continuationTask;
+            return _whenNominatedTask.Task.WithCancellation(cancellationToken);
         }
 
         // True means the project system plans to call NominateProjectAsync in the future.
@@ -375,19 +379,15 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
         private bool IsNugetRestoreFinished()
         {
-            // TODO : if NominateForRestoreAsync() has not finished, return false
+            // If NominateForRestoreAsync() has not finished, return false
             return !_nugetRestoreStarted;
         }
 
         private bool IsSavedNominationEmptyOrOlder(ConfiguredProject activeConfiguredProject)
         {
             if (!_savedNominatedConfiguredVersion.TryGetValue(activeConfiguredProject.ProjectConfiguration,
-                out IComparable latestSavedVersionForActiveConfiguredProject))
-            {
-                return true;
-            }
-
-            if (latestSavedVersionForActiveConfiguredProject.IsLaterThan(activeConfiguredProject.ProjectVersion))
+                out IComparable latestSavedVersionForActiveConfiguredProject) || 
+                latestSavedVersionForActiveConfiguredProject.IsLaterThan(activeConfiguredProject.ProjectVersion))
             {
                 return true;
             }
