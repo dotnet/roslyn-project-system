@@ -103,6 +103,125 @@ And you're done. Projects that import the .targets file will now show this UI wh
 
 ## Option 2: Embedded XAML file
 
-In this option the XAML file is embedded in an assembly as a resource and discovered by means of a MEF export. Compared to Option 1 this requires more initial setup but does not require you to distribute an additional file. This may be an attractive option if you are already exporting MEF components for use in Visual Studio.
+In this option the XAML file is embedded in an assembly as a resource and discovered by means of a MEF export. Compared to Option 1, this requires more initial setup but does not require you to distribute an additional file. This may be an attractive option if you are already exporting MEF components for use in Visual Studio.
 
-_Steps to be determined._
+### Step 1: Define the `XamlPropertyRule` item
+
+Add the following item to your .csproj file:
+
+```xml
+  <ItemGroup>
+    <XamlPropertyRule Include="path\to\MyPropertyPage.xaml">
+      <Namespace>MyNamespace</Namespace>
+      <DataAccess>IRule</DataAccess>
+      <RuleInjectionClassName>MyPropertyPageProperties</RuleInjectionClassName>
+    </XamlPropertyRule>
+  </ItemGroup>
+```
+
+### Step 2: Register the property page and properties
+
+Add a partial class that corresponds to the properties defined within the rule and generated during build:
+
+```csharp
+using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.ProjectSystem.Properties;
+using System;
+using System.ComponentModel.Composition;
+
+namespace MyNamespace
+{
+    [Export]
+    [AppliesTo(MyProject.UniqueCapability)]
+    internal partial class MyPropertyPageProperties : StronglyTypedPropertyAccess
+    {
+        [ExportPropertyXamlRuleDefinition("<Assembly Name>, Version=<Assembly Version>, Culture=<Assembly Culture>, PublicKeyToken=<Assembly Public Key Token>", "XamlRuleToCode:MyPropertyPage.xaml", "Project")]
+        [AppliesTo(MyProject.UniqueCapability)]
+        private object MyRule { get { throw new NotImplementedException(); } }
+
+        [ImportingConstructor]
+        public MyPropertyPageProperties(ConfiguredProject configuredProject)
+            : base(configuredProject)
+        {
+        }
+
+        public MyPropertyPageProperties(ConfiguredProject configuredProject, string file, string itemType, string itemName)
+            : base(configuredProject, file, itemType, itemName)
+        {
+        }
+
+        public MyPropertyPageProperties(ConfiguredProject configuredProject, IProjectPropertiesContext projectPropertiesContext)
+            : base(configuredProject, projectPropertiesContext)
+        {
+        }
+
+        public MyPropertyPageProperties(ConfiguredProject configuredProject, UnconfiguredProject project)
+            : base(configuredProject, project)
+        {
+        }
+    }
+}
+```
+
+### Step 3: Register the assembly codebase
+
+In order for Visual Studio to locate the rule, you must register the codebase of the assembly embedding the rule from the Visual Studio package via the `ProvideCodeBaseAttribute`.
+
+> Note: this is true *even when other MEF components are successfully loaded without a registered codebase*.
+
+```csharp
+using Microsoft.VisualStudio.Shell;
+
+[assembly: ProvideCodeBase(CodeBase = @"$PackageFolder$\Path\To\MyAssembly.dll")]
+
+```
+
+### Step 4: Bind rule properties to launch settings values
+
+Registering the property page allows the settings UI to be visible when the launch profile is selected, but settings will not be read from or written to the launch profile until they are bound to a specific launch profile values via a `ILaunchProfileExtensionValueProvider` implementation.
+
+```csharp
+using Microsoft.Build.Framework.XamlTypes;
+using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.ProjectSystem.Debug;
+using Microsoft.VisualStudio.ProjectSystem.Properties;
+using System.Collections.Immutable;
+
+namespace MyNamespace
+{
+    [ExportLaunchProfileExtensionValueProvider(
+    new[]
+    {
+            ExecutablePathPropertyName
+    },
+    ExportLaunchProfileExtensionValueProviderScope.LaunchProfile)]
+    [AppliesTo(MyProject.UniqueCapability)]
+    internal sealed class MyLaunchProfileExtensionValueProvider : ILaunchProfileExtensionValueProvider
+    {
+        private const string ExecutablePathPropertyName = "ExecutablePath";
+
+        public string OnGetPropertyValue(string propertyName, ILaunchProfile launchProfile, ImmutableDictionary<string, object> globalSettings, Rule rule)
+        {
+            string propertyValue = null;
+            switch (propertyName)
+            {
+                case ExecutablePathPropertyName:
+                    propertyValue = (string)launchProfile.OtherSettings["executablePath"];
+                    break;
+            }
+
+            return propertyValue ?? string.Empty;
+        }
+
+        public void OnSetPropertyValue(string propertyName, string propertyValue, IWritableLaunchProfile launchProfile, ImmutableDictionary<string, object> globalSettings, Rule rule)
+        {
+            switch (propertyName)
+            {
+                case ExecutablePathPropertyName:
+                    launchProfile.OtherSettings["executablePath"] = propertyValue;
+                    break;
+            }
+        }
+    }
+}
+```
