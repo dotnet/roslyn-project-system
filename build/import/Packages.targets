@@ -50,7 +50,7 @@
     <PackageReference Update="Microsoft.VisualStudio.ImageCatalog"                                    Version="17.0.0-previews-2-31421-281" />
     <PackageReference Update="Microsoft.VisualStudio.Interop"                                         Version="17.0.0-previews-2-31423-289"/>
     <PackageReference Update="Microsoft.VisualStudio.ManagedInterfaces"                               Version="8.0.50728" />
-    <PackageReference Update="Microsoft.VisualStudio.RpcContracts"                                    Version="17.0.50-preview-0002-0002" />
+    <PackageReference Update="Microsoft.VisualStudio.RpcContracts"                                    Version="17.0.50-preview-0002-0010" />
     <PackageReference Update="Microsoft.VisualStudio.Telemetry"                                       Version="16.3.176" />
     <PackageReference Update="Microsoft.VisualStudio.Settings.15.0"                                   Version="16.8.30406.155-pre" />
     <PackageReference Update="Microsoft.VisualStudio.Setup.Configuration.Interop"                     Version="2.3.2262-g94fae01e" />
@@ -59,8 +59,8 @@
     <PackageReference Update="Microsoft.VisualStudio.Shell.Design"                                    Version="17.0.0-previews-2-31421-281" />
     <PackageReference Update="Microsoft.VisualStudio.Shell.Framework"                                 Version="17.0.0-previews-2-31421-281" />
     <PackageReference Update="Microsoft.VisualStudio.TemplateWizardInterface"                         Version="17.0.0-preview-2-31223-026" />
-    <PackageReference Update="Microsoft.VisualStudio.Threading"                                       Version="17.0.21-alpha" />
-    <PackageReference Update="Microsoft.VisualStudio.Threading.Analyzers"                             Version="17.0.21-alpha" />
+    <PackageReference Update="Microsoft.VisualStudio.Threading"                                       Version="17.0.26-alpha" />
+    <PackageReference Update="Microsoft.VisualStudio.Threading.Analyzers"                             Version="17.0.26-alpha" />
     <PackageReference Update="Microsoft.VisualStudio.Utilities"                                       Version="17.0.0-previews-2-31421-281" />
     <PackageReference Update="Microsoft.VisualStudio.Validation"                                      Version="17.0.12-alpha" />
     <PackageReference Update="Microsoft.VisualStudio.XmlEditor"                                       Version="17.0.0-preview-2-31223-026" />
@@ -71,10 +71,10 @@
     <PackageReference Include="StreamJsonRpc"                                                         Version="2.8.21" />
 
     <!-- CPS -->
-    <PackageReference Update="Microsoft.VisualStudio.ProjectSystem"                                   Version="17.0.610-pre" />
-    <PackageReference Update="Microsoft.VisualStudio.ProjectSystem.Analyzers"                         Version="17.0.610-pre" />
-    <PackageReference Update="Microsoft.VisualStudio.ProjectSystem.Query"                             Version="17.0.610-pre" />
-    <PackageReference Update="Microsoft.VisualStudio.ProjectSystem.SDK.Tools"                         Version="17.0.610-pre" />
+    <PackageReference Update="Microsoft.VisualStudio.ProjectSystem"                                   Version="17.0.788-pre" />
+    <PackageReference Update="Microsoft.VisualStudio.ProjectSystem.Analyzers"                         Version="17.0.788-pre" />
+    <PackageReference Update="Microsoft.VisualStudio.ProjectSystem.Query"                             Version="17.0.788-pre" />
+    <PackageReference Update="Microsoft.VisualStudio.ProjectSystem.SDK.Tools"                         Version="17.0.788-pre" />
     
     <!-- Roslyn -->
     <PackageReference Update="Microsoft.VisualStudio.LanguageServices"                                Version="4.0.0-2.21302.13" />
