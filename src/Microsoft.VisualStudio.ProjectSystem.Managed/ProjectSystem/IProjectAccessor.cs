@@ -17,26 +17,6 @@ namespace Microsoft.VisualStudio.ProjectSystem
     internal interface IProjectAccessor
     {
         /// <summary>
-        ///     Obtains a write lock, asynchronously awaiting for the lock if it is not immediately available.
-        /// </summary>
-        /// <param name="action">
-        ///     The <see cref="Func{T1, T2, TResult}"/> to run while holding the lock.
-        /// </param>
-        /// <param name="cancellationToken">
-        ///     A token whose cancellation signals lost interest in the result.
-        /// </param>
-        /// <returns>
-        ///     The result of executing <paramref name="action"/> over the <see cref="ProjectCollection"/>.
-        /// </returns>
-        /// <exception cref="ArgumentNullException">
-        ///     <paramref name="action"/> is <see langword="null"/>.
-        /// </exception>
-        /// <remarks>
-        ///     NOTE: To avoid deadlocks, do not call arbitrary services or asynchronous code other than methods on <see cref="IProjectAccessor"/> within <paramref name="action"/>.
-        /// </remarks>
-        Task EnterWriteLockAsync(Func<ProjectCollection, CancellationToken, Task> action, CancellationToken cancellationToken = default);
-
-        /// <summary>
         ///     Opens the MSBuild project construction model for the specified project, passing it to the specified action for reading.
         /// </summary>
         /// <param name="project">
