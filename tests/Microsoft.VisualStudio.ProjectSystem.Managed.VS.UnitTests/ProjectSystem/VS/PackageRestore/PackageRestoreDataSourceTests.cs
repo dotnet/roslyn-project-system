@@ -2,6 +2,7 @@
 
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.IO;
+using Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore.Snapshots;
 using NuGet.SolutionRestoreManager;
 using Xunit;
 
@@ -38,7 +39,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             var instance = CreateInitializedInstance(solutionRestoreService: solutionRestoreService);
 
             var restoreInfo = ProjectRestoreInfoFactory.Create();
-            var value = IProjectVersionedValueFactory.Create(new PackageRestoreUnconfiguredInput(restoreInfo, new PackageRestoreConfiguredInput[0]));
+            var ConfigureInputs = PackageRestoreConfiguredInputFactory.Create(restoreInfo);
+            var value = IProjectVersionedValueFactory.Create(new PackageRestoreUnconfiguredInput(restoreInfo, ConfigureInputs!));
 
             await instance.RestoreAsync(value);
 
@@ -94,8 +96,9 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             IFileSystem fileSystem = IFileSystemFactory.Create();
             var projectDependentFileChangeNotificationService = IProjectDependentFileChangeNotificationServiceFactory.Create();
             var vsSolutionRestoreService4 = IVsSolutionRestoreService4Factory.ImplementRegisterRestoreInfoSourceAsync();
+            var sharedJoinableTaskCollection = new PackageRestoreSharedJoinableTaskCollection(IProjectThreadingServiceFactory.Create());
 
-            return new PackageRestoreDataSource(
+            return new PackageRestoreDataSourceMocked(
                 project,
                 dataSource,
                 projectAsynchronousTasksService,
@@ -103,7 +106,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 fileSystem,
                 logger,
                 projectDependentFileChangeNotificationService,
-                vsSolutionRestoreService4);
+                vsSolutionRestoreService4,
+                sharedJoinableTaskCollection);
         }
     }
 }

@@ -75,7 +75,10 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         /// Re-usable task that completes when there is a new nomination
         /// </summary>
         private TaskCompletionSource<bool>? _whenNominatedTask;
+
         private bool _nugetRestoreStarted;
+
+        private bool _wasSourceBlockContinuationSet;
 
         /// <summary>
         /// Save the configured project versions that might get nominations.
@@ -109,10 +112,14 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         {
             // Register before this project receives any data flows containing possible nominations.
             // This is needed because we need to register before any nuget restore or before the solution load.
-            _project.Services.FaultHandler.Forget(
-                _solutionRestoreService4.RegisterRestoreInfoSourceAsync(this, _projectAsynchronousTasksService.UnloadCancellationToken), 
-                _project, 
-                ProjectFaultSeverity.LimitedFunctionality);
+#pragma warning disable RS0030 // Do not used banned APIs
+            _ = Task.Run(() =>
+            {
+                _ = _solutionRestoreService4
+                    .RegisterRestoreInfoSourceAsync(this, _projectAsynchronousTasksService.UnloadCancellationToken)
+                    .ConfigureAwait(false);
+            });
+#pragma warning restore RS0030 // Do not used banned APIs
 
             JoinUpstreamDataSources(_dataSource);
 
@@ -144,70 +151,60 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         private async Task<bool> RestoreCoreAsync(PackageRestoreUnconfiguredInput value)
         {
             ProjectRestoreInfo? restoreInfo = value.RestoreInfo;
+            bool success = false;
 
-            // Prevent extra restore under some conditions.
-            if (IsProjectConfigurationVersionOutOfDate(value.ConfiguredInputs))
+            try
             {
-                return false;
-            }
-
-            // Restore service always does work regardless of whether the value we pass 
-            // them to actually contains changes, only nominate if there are any.
-            byte[] hash = RestoreHasher.CalculateHash(restoreInfo!);
-
-            if (_latestHash != null && Enumerable.SequenceEqual(hash, _latestHash))
-            {
-                SaveNominatedConfiguredVersions(value.ConfiguredInputs);
-                return true;
-            }
-
-            _latestHash = hash;
-
-            _nugetRestoreStarted = true;
-            JoinableTask<bool> joinableTask = JoinableFactory.RunAsync(() =>
-            {
-                return NominateForRestoreAsync(restoreInfo!, _projectAsynchronousTasksService.UnloadCancellationToken);
-            });
-
-            SaveNominatedConfiguredVersions(value.ConfiguredInputs);
-
-            _projectAsynchronousTasksService.RegisterAsyncTask(joinableTask,
-                                                               ProjectCriticalOperation.Build | ProjectCriticalOperation.Unload | ProjectCriticalOperation.Rename,
-                                                               registerFaultHandler: true);
-
-            // Prevent overlap until Restore completes
-            bool success = await joinableTask;
-
-            _nugetRestoreStarted = false;
-
-            HintProjectDependentFile(restoreInfo!);
-
-            return success;
-        }
-
-        private bool IsProjectConfigurationVersionOutOfDate(IReadOnlyCollection<PackageRestoreConfiguredInput> configuredInputs)
-        {
-            Assumes.Present(_project.Services.ActiveConfiguredProjectProvider);
-            Assumes.Present(_project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject);
-
-            var activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
-
-            if (!_savedNominatedConfiguredVersion.TryGetValue(activeConfiguredProject.ProjectConfiguration, out IComparable savedVersionOfActiveConfiguration))
-            {
-                return false;
-            }
-
-            // Nuget only cares about the active configuration
-            foreach (var configuredInput in configuredInputs)
-            {
-                if (configuredInput.ProjectConfiguration.Equals(activeConfiguredProject.ProjectConfiguration) &&
-                    configuredInput.ConfiguredProjectVersion.IsLaterThanOrEqualTo(savedVersionOfActiveConfiguration))
+                // Prevent extra restore under some conditions.
+                if (IsProjectConfigurationVersionOutOfDate(value.ConfiguredInputs))
                 {
+                    return false;
+                }
+
+                // Restore service always does work regardless of whether the value we pass 
+                // them to actually contains changes, only nominate if there are any.
+                byte[] hash = RestoreHasher.CalculateHash(restoreInfo!);
+
+                if (_latestHash != null && Enumerable.SequenceEqual(hash, _latestHash))
+                {
+                    SaveNominatedConfiguredVersions(value.ConfiguredInputs);
                     return true;
                 }
+
+                _latestHash = hash;
+
+                _nugetRestoreStarted = true;
+                JoinableTask<bool> joinableTask = JoinableFactory.RunAsync(() =>
+                {
+                    return NominateForRestoreAsync(restoreInfo!, _projectAsynchronousTasksService.UnloadCancellationToken);
+                });
+
+                SaveNominatedConfiguredVersions(value.ConfiguredInputs);
+
+                _projectAsynchronousTasksService.RegisterAsyncTask(joinableTask,
+                                                                   ProjectCriticalOperation.Build | ProjectCriticalOperation.Unload | ProjectCriticalOperation.Rename,
+                                                                   registerFaultHandler: true);
+
+                // Prevent overlap until Restore completes
+                success = await joinableTask;
+
+                lock (SyncObject)
+                {
+                    _nugetRestoreStarted = false;
+                }
+
+                HintProjectDependentFile(restoreInfo!);
+            }
+            catch
+            {
+                success = false;
+            }
+            finally
+            {
+                _nugetRestoreStarted = false;
             }
 
-            return false;
+            return success;
         }
 
         private void SaveNominatedConfiguredVersions(IReadOnlyCollection<PackageRestoreConfiguredInput> configuredInputs)
@@ -223,8 +220,10 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
                 if (_whenNominatedTask is not null)
                 {
-                    _whenNominatedTask.SetResult(true);
-                    _whenNominatedTask = null;
+                    if (_whenNominatedTask.TrySetResult(true))
+                    {
+                        _whenNominatedTask = null;
+                    }
                 }
             }
         }
@@ -307,26 +306,29 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                     return Task.CompletedTask;
                 }
 
-                if (_whenNominatedTask is null)
+                _whenNominatedTask ??= new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                if (!_wasSourceBlockContinuationSet)
                 {
-                    _whenNominatedTask = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    _wasSourceBlockContinuationSet = true;
 
                     _ = SourceBlock.Completion.ContinueWith(t =>
                     {
                         lock (SyncObject)
                         {
-                            if (t.IsFaulted)
+                            if (_whenNominatedTask is not null)
                             {
-                                _whenNominatedTask.SetException(t.Exception);
-                            }
-                            else
-                            {
-                                _whenNominatedTask.TrySetCanceled();
+                                if (t.IsFaulted)
+                                {
+                                    _whenNominatedTask.SetException(t.Exception);
+                                }
+                                else
+                                {
+                                    _whenNominatedTask.TrySetCanceled();
+                                }
                             }
                         }
-                    }, cancellationToken,
-                       TaskContinuationOptions.OnlyOnFaulted,
-                       TaskScheduler.Default);
+                    }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
                 }
             }
 
@@ -346,7 +348,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 Assumes.Present(_project.Services.ActiveConfiguredProjectProvider);
                 Assumes.Present(_project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject);
 
-                if (SourceBlock.Completion.IsFaulted)
+                // Nuget should not wait for projects that failed DTB
+                if (SourceBlock.Completion.IsFaulted || SourceBlock.Completion.IsCompleted)
                 {
                     return false;
                 }
@@ -354,7 +357,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 // Avoid possible deadlock.
                 // Because RestoreCoreAsync() is called inside a dataflow block it will not be called with new data
                 // until the old task finishes. So, if the project gets nominating restore, it will not get updated data.
-                if (IsNugetRestoreFinished())
+                if (IsNuGetRestoreOnGoing())
                 {
                     return false;
                 }
@@ -362,12 +365,6 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 ConfiguredProject? activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
 
                 // Nuget should wait until the project at least nominates once.
-                if (!_savedNominatedConfiguredVersion.ContainsKey(activeConfiguredProject.ProjectConfiguration))
-                {
-                    return true;
-                }
-
-                // Nuget should not wait for projects that failed DTB
                 if (SourceBlock.Completion.IsCompleted)
                 {
                     return false;
@@ -378,26 +375,69 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             }
         }
 
-        private bool IsNugetRestoreFinished()
+        private bool IsNuGetRestoreOnGoing()
         {
             // If NominateForRestoreAsync() has not finished, return false
-            return !_nugetRestoreStarted;
+            return _nugetRestoreStarted;
         }
 
-        private bool IsSavedNominationEmptyOrOlder(ConfiguredProject activeConfiguredProject)
+        protected virtual bool IsSavedNominationEmptyOrOlder(ConfiguredProject activeConfiguredProject)
         {
             if (!_savedNominatedConfiguredVersion.TryGetValue(activeConfiguredProject.ProjectConfiguration,
-                out IComparable latestSavedVersionForActiveConfiguredProject) || 
-                latestSavedVersionForActiveConfiguredProject.IsLaterThan(activeConfiguredProject.ProjectVersion))
+                    out IComparable latestSavedVersionForActiveConfiguredProject) ||
+                activeConfiguredProject.ProjectVersion.IsLaterThan(latestSavedVersionForActiveConfiguredProject))
             {
                 return true;
             }
 
-            foreach(var loadedProject in activeConfiguredProject.UnconfiguredProject.LoadedConfiguredProjects)
+            foreach (var loadedProject in activeConfiguredProject.UnconfiguredProject.LoadedConfiguredProjects)
             {
                 if (_savedNominatedConfiguredVersion.TryGetValue(loadedProject.ProjectConfiguration, out IComparable savedProjectVersion))
                 {
-                    if (savedProjectVersion.IsLaterThan(loadedProject.ProjectVersion))
+                    if (loadedProject.ProjectVersion.IsLaterThan(savedProjectVersion))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        protected virtual bool IsProjectConfigurationVersionOutOfDate(IReadOnlyCollection<PackageRestoreConfiguredInput>? configuredInputs)
+        {
+            Assumes.Present(_project.Services.ActiveConfiguredProjectProvider);
+            Assumes.Present(_project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject);
+
+            if (configuredInputs is null)
+            {
+                return false;
+            }
+
+            var activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
+
+            IComparable? activeProjectConfigurationVersionFromConfiguredInputs = null;
+            foreach (var configuredInput in configuredInputs)
+            {
+                if (configuredInput.ProjectConfiguration.Equals(activeConfiguredProject.ProjectConfiguration))
+                {
+                    activeProjectConfigurationVersionFromConfiguredInputs = configuredInput.ConfiguredProjectVersion;
+                }
+            }
+
+            if (activeProjectConfigurationVersionFromConfiguredInputs is null ||
+                activeConfiguredProject.ProjectVersion.IsLaterThan(
+                    activeProjectConfigurationVersionFromConfiguredInputs))
+            {
+                return true;
+            }
+
+            foreach (var loadedProject in activeConfiguredProject.UnconfiguredProject.LoadedConfiguredProjects)
+            {
+                foreach (var configuredInput in configuredInputs)
+                {
+                    if (loadedProject.ProjectConfiguration.Equals(configuredInput.ProjectConfiguration) &&
+                        loadedProject.ProjectVersion.IsLaterThan(configuredInput.ConfiguredProjectVersion))
                     {
                         return true;
                     }

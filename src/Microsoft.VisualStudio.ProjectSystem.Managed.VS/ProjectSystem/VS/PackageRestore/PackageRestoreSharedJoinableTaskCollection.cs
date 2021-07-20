@@ -14,6 +14,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
         private readonly JoinableTaskFactory _joinableTaskFactory;
 
+        [ImportingConstructor]
         public PackageRestoreSharedJoinableTaskCollection(IProjectThreadingService threadingService) 
         {
             _joinableTaskCollection = threadingService.JoinableTaskContext.CreateCollection();

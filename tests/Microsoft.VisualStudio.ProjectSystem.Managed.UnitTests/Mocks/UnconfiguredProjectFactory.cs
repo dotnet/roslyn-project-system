@@ -32,11 +32,8 @@ namespace Microsoft.VisualStudio.ProjectSystem
 
             var configuredProject = new Mock<ConfiguredProject>();
 
-            var projectConfiguration = new Mock<ProjectConfiguration>().Object;
-            configuredProject.Setup(s => s.ProjectConfiguration).Returns(projectConfiguration);
-           
             project.Setup(s => s.Services.ActiveConfiguredProjectProvider!.ActiveConfiguredProject).Returns(configuredProject.Object);
-
+            project.Setup(s => s.Services.ActiveConfiguredProjectProvider!.ActiveConfiguredProject!.ProjectVersion).Returns(configuredProject.Object.ProjectVersion);
             return project.Object;
         }
 
