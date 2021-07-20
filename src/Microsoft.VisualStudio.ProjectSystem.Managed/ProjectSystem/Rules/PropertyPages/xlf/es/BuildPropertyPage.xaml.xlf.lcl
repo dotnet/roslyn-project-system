@@ -12,19 +12,25 @@
       <Disp Icon="Str" Disp="true" LocTbl="false" />
       <Item ItemId=";BoolProperty|AllowUnsafeBlocks|Description" ItemType="0" PsrId="308" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Allows code that uses the 'unsafe' keyword to compile.]]></Val>
+          <Val><![CDATA[Allow code that uses the 'unsafe' keyword to compile.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Permite que el código que usa la palabra clave "unsafe" se compile.]]></Val>
+            <Val><![CDATA[Permite que el código que use la palabra clave "no seguro" se compile.]]></Val>
           </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Allows code that uses the 'unsafe' keyword to compile.]]></Val>
+          </Prev>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";BoolProperty|AllowUnsafeBlocks|DisplayName" ItemType="0" PsrId="308" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Allow unsafe code]]></Val>
+          <Val><![CDATA[Unsafe code]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Permitir código no seguro]]></Val>
+            <Val><![CDATA[Código no seguro]]></Val>
           </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Allow unsafe code]]></Val>
+          </Prev>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -39,10 +45,13 @@
       </Item>
       <Item ItemId=";BoolProperty|CheckForOverflowUnderflow|Description" ItemType="0" PsrId="308" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Specifies whether integer arithmetic that results in a value outside the range of the data type, and that is not in the scope of a checked or unchecked keyword, causes a run-time exception.]]></Val>
+          <Val><![CDATA[Throw exceptions when integer arithmetic produces out of range values.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Especifica si la aritmética de enteros que genera un valor fuera del intervalo del tipo de datos y que no está en el ámbito de las palabra clave checked o unchecked provocará una excepción en tiempo de ejecución.]]></Val>
+            <Val><![CDATA[Produce excepciones cuando la aritmética de los enteros genera valores fuera del intervalo.]]></Val>
           </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Specifies whether integer arithmetic that results in a value outside the range of the data type, and that is not in the scope of a checked or unchecked keyword, causes a run-time exception.]]></Val>
+          </Prev>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -84,10 +93,13 @@
       </Item>
       <Item ItemId=";BoolProperty|Deterministic|Description" ItemType="0" PsrId="308" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Indicates whether the compiler should produce identical assemblies for identical inputs.]]></Val>
+          <Val><![CDATA[Produce identical compilation output for identical inputs.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Indica si el compilador debe producir ensamblados idénticos para entradas idénticas.]]></Val>
+            <Val><![CDATA[Genera un resultado de compilación idéntico para entradas idénticas.]]></Val>
           </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Indicates whether the compiler should produce identical assemblies for identical inputs.]]></Val>
+          </Prev>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -120,10 +132,13 @@
       </Item>
       <Item ItemId=";BoolProperty|Optimize|Description" ItemType="0" PsrId="308" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Enables or disables optimizations performed by the compiler to make your output file smaller, faster, and more efficient.]]></Val>
+          <Val><![CDATA[Enable compiler optimizations for smaller, faster, and more efficient output.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Habilita o deshabilita las optimizaciones realizadas por el compilador para que el archivo de salida tenga un menor tamaño, y sea más rápido y eficaz.]]></Val>
+            <Val><![CDATA[Habilita las optimizaciones del compilador para obtener resultados más eficaces, más rápidos y más pequeños.]]></Val>
           </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Enables or disables optimizations performed by the compiler to make your output file smaller, faster, and more efficient.]]></Val>
+          </Prev>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -309,10 +324,13 @@
       </Item>
       <Item ItemId=";EnumProperty|ErrorReport|Description" ItemType="0" PsrId="308" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Controls when internal compiler error (ICE) reports are sent to Microsoft.]]></Val>
+          <Val><![CDATA[Send internal compiler error (ICE) reports to Microsoft.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Controla cuándo se envían a Microsoft los informes de errores internos del compilador (ICE).]]></Val>
+            <Val><![CDATA[Envía informes de errores internos del compilador (ICE) a Microsoft.]]></Val>
           </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Controls when internal compiler error (ICE) reports are sent to Microsoft.]]></Val>
+          </Prev>
         </Str>
         <Disp Icon="Str" />
       </Item>
