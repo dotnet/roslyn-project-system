@@ -91,8 +91,9 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             IFileSystem fileSystem,
             IProjectDiagnosticOutputService logger,
             IProjectDependentFileChangeNotificationService projectDependentFileChangeNotificationService,
-            IVsSolutionRestoreService4 solutionRestoreService4)
-            : base(project, synchronousDisposal: true, registerDataSource: false)
+            IVsSolutionRestoreService4 solutionRestoreService4,
+            PackageRestoreSharedJoinableTaskCollection sharedJoinableTaskCollection)
+            : base(project, sharedJoinableTaskCollection, synchronousDisposal: true, registerDataSource: false)
         {
             _project = project;
             _dataSource = dataSource;
