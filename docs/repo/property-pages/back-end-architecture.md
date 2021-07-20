@@ -14,7 +14,7 @@ The following diagram identifies the major components of the new property pages 
 
 The new UI is built on top of WPF, as it provides better support for VS theming and visual customization than WinForms. The UI elements are created on the fly based on the data returned by the Project Query API.
 
-For more details, see [UI Architecture](ui-architecture-md).
+For more details, see [UI Architecture](ui-architecture.md).
 
 ### 2. Project Query API
 

@@ -3,7 +3,7 @@
 This repository contains the following broad features:
 
 ## C# and Visual Basic project system for .NET Core/.NET Standard/Shared Projects
-[Host Agnostic Source](/src/Microsoft.VisualStudio.ProjectSystem) | [Visual Studio Source](/src/Microsoft.VisualStudio.ProjectSystem.VS)
+[Host Agnostic Source](/src/Microsoft.VisualStudio.ProjectSystem.Managed) | [Visual Studio Source](/src/Microsoft.VisualStudio.ProjectSystem.Managed.VS)
 
 ## Application Designer ("AppDesigner")
 [Source](/src/Microsoft.VisualStudio.AppDesigner)
