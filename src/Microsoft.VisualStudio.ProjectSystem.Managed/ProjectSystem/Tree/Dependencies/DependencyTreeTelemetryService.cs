@@ -24,7 +24,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.Tree.Dependencies
     /// </remarks>
     [Export(typeof(IDependencyTreeTelemetryService))]
     [AppliesTo(ProjectCapability.DependenciesTree)]
-    internal sealed class DependencyTreeTelemetryService : IDependencyTreeTelemetryService, IDisposable
+    internal sealed class DependencyTreeTelemetryService : OnceInitializedOnceDisposed, IDependencyTreeTelemetryService
     {
         private const int MaxEventCount = 10;
 
@@ -58,6 +58,10 @@ namespace Microsoft.VisualStudio.ProjectSystem.Tree.Dependencies
                 _telemetryService = telemetryService;
                 _stateByFramework = new Dictionary<TargetFramework, TelemetryState>();
             }
+        }
+
+        protected override void Initialize()
+        {
         }
 
         public void InitializeTargetFrameworkRules(ImmutableArray<TargetFramework> targetFrameworks, IReadOnlyCollection<string> rules)
@@ -167,9 +171,9 @@ namespace Microsoft.VisualStudio.ProjectSystem.Tree.Dependencies
             _dependenciesSnapshot = dependenciesSnapshot;
         }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            if (_telemetryService != null && _dependenciesSnapshot != null && _projectId != null)
+            if (disposing && _telemetryService != null && _dependenciesSnapshot != null && _projectId != null)
             {
                 var data = new List<TargetData>();
                 int totalDependencyCount = 0;
