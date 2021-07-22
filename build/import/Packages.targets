@@ -88,8 +88,7 @@
     <PackageReference Update="Roslyn.Diagnostics.Analyzers"                                           Version="3.3.2" />
 
     <!-- NuGet -->
-    <PackageReference Update="NuGet.SolutionRestoreManager.Interop"                                   Version="5.8.0-preview.2.6776" />
-    <PackageReference Update="NuGet.VisualStudio"                                                     Version="6.0.0-preview.0.2" />
+    <PackageReference Update="NuGet.SolutionRestoreManager.Interop"                                   Version="6.0.0-preview.2.129" />
 
     <!-- Framework packages -->
     <PackageReference Update="Microsoft.IO.Redist"                                                    Version="4.7.1" />
