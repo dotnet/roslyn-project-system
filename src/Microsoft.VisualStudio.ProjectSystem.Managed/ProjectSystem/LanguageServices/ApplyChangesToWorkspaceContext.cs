@@ -34,7 +34,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.LanguageServices
         private ExportLifetimeContext<IWorkspaceContextHandler>[] _handlers = Array.Empty<ExportLifetimeContext<IWorkspaceContextHandler>>();
 
         [ImportingConstructor]
-        public ApplyChangesToWorkspaceContext(ConfiguredProject project, IProjectDiagnosticOutputService logger, [ImportMany]ExportFactory<IWorkspaceContextHandler>[] workspaceContextHandlerFactories)
+        public ApplyChangesToWorkspaceContext(ConfiguredProject project, IProjectDiagnosticOutputService logger, [ImportMany] ExportFactory<IWorkspaceContextHandler>[] workspaceContextHandlerFactories)
         {
             _project = project;
             _logger = logger;
@@ -58,9 +58,9 @@ namespace Microsoft.VisualStudio.ProjectSystem.LanguageServices
             EnsureInitialized();
         }
 
-        public async Task ApplyProjectBuildAsync(IProjectVersionedValue<IProjectSubscriptionUpdate> update, 
+        public async Task ApplyProjectBuildAsync(IProjectVersionedValue<IProjectSubscriptionUpdate> update,
             IProjectBuildSnapshot buildSnapshot,
-            ContextState state, 
+            ContextState state,
             CancellationToken cancellationToken)
         {
             Requires.NotNull(update, nameof(update));
@@ -95,7 +95,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.LanguageServices
             }
 
             // We just need to pass all options to Roslyn
-            _context.SetOptions(options .MoveToImmutable());
+            _context.SetOptions(options.MoveToImmutable());
         }
 
         public Task ApplyProjectEvaluationAsync(IProjectVersionedValue<IProjectSubscriptionUpdate> update, ContextState state, CancellationToken cancellationToken)
@@ -107,6 +107,17 @@ namespace Microsoft.VisualStudio.ProjectSystem.LanguageServices
             IComparable version = GetConfiguredProjectVersion(update);
 
             return ProcessProjectEvaluationHandlersAsync(version, update, state, cancellationToken);
+        }
+
+        public Task ApplySourceItemsAsync(IProjectVersionedValue<IProjectSubscriptionUpdate> update, ContextState state, CancellationToken cancellationToken)
+        {
+            Requires.NotNull(update, nameof(update));
+
+            VerifyInitializedAndNotDisposed();
+
+            IComparable version = GetConfiguredProjectVersion(update);
+
+            return ProcessSourceItemsHandlersAsync(version, update, state, cancellationToken);
         }
 
         public IEnumerable<string> GetProjectEvaluationRules()
@@ -211,6 +222,21 @@ namespace Microsoft.VisualStudio.ProjectSystem.LanguageServices
                         continue;
 
                     evaluationHandler.Handle(version, projectChange, state, _logger);
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private Task ProcessSourceItemsHandlersAsync(IComparable version, IProjectVersionedValue<IProjectSubscriptionUpdate> update, ContextState state, CancellationToken cancellationToken)
+        {
+            foreach (ExportLifetimeContext<IWorkspaceContextHandler> handler in _handlers)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (handler.Value is ISourceItemsHandler sourceItemsHandler)
+                {
+                    sourceItemsHandler.Handle(version, update.Value.ProjectChanges, state, _logger);
                 }
             }
 

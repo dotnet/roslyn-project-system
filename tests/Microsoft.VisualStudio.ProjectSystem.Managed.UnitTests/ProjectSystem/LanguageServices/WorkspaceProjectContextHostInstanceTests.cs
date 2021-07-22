@@ -134,9 +134,10 @@ namespace Microsoft.VisualStudio.ProjectSystem.LanguageServices
         }
 
         [Theory]
-        [InlineData(true)]      // Evaluation
-        [InlineData(false)]     // Project Build
-        public async Task OnProjectChangedAsync_WhenProjectUnloaded_TriggersCancellation(bool evaluation)
+        [InlineData(WorkspaceContextHandlerType.Evaluation)]
+        [InlineData(WorkspaceContextHandlerType.ProjectBuild)]
+        [InlineData(WorkspaceContextHandlerType.SourceItems)]
+        internal async Task OnProjectChangedAsync_WhenProjectUnloaded_TriggersCancellation(WorkspaceContextHandlerType handlerType)
         {
             var unloadSource = new CancellationTokenSource();
             var tasksService = IUnconfiguredProjectTasksServiceFactory.ImplementUnloadCancellationToken(unloadSource.Token);
@@ -157,21 +158,28 @@ namespace Microsoft.VisualStudio.ProjectSystem.LanguageServices
                 cancellationToken.ThrowIfCancellationRequested();
             }
 
-            var applyChangesToWorkspaceContext = evaluation ? IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectEvaluationAsync(ApplyProjectEvaluation) : IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectBuildAsync(ApplyProjectBuild);
+            var applyChangesToWorkspaceContext = handlerType switch
+            {
+                WorkspaceContextHandlerType.Evaluation => IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectEvaluationAsync(ApplyProjectEvaluation),
+                WorkspaceContextHandlerType.ProjectBuild => IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectBuildAsync(ApplyProjectBuild),
+                WorkspaceContextHandlerType.SourceItems => IApplyChangesToWorkspaceContextFactory.ImplementApplySourceItemsAsync(ApplyProjectEvaluation), // ApplyProjectEvaluation works for source items as they share a signature
+                _ => throw new NotImplementedException()
+            };
 
             var instance = await CreateInitializedInstanceAsync(tasksService: tasksService, applyChangesToWorkspaceContext: applyChangesToWorkspaceContext);
 
             var update = IProjectVersionedValueFactory.Create<(ConfiguredProject, IProjectSubscriptionUpdate, IProjectBuildSnapshot)>(default);
             await Assert.ThrowsAsync<OperationCanceledException>(() =>
             {
-                return instance.OnProjectChangedAsync(update, evaluation);
+                return instance.OnProjectChangedAsync(update, handlerType);
             });
         }
 
         [Theory]
-        [InlineData(true)]      // Evaluation
-        [InlineData(false)]     // Project Build
-        public async Task OnProjectChangedAsync_WhenInstanceDisposed_TriggersCancellation(bool evaluation)
+        [InlineData(WorkspaceContextHandlerType.Evaluation)]
+        [InlineData(WorkspaceContextHandlerType.ProjectBuild)]
+        [InlineData(WorkspaceContextHandlerType.SourceItems)]
+        internal async Task OnProjectChangedAsync_WhenInstanceDisposed_TriggersCancellation(WorkspaceContextHandlerType handlerType)
         {
             WorkspaceProjectContextHostInstance? instance = null;
 
@@ -191,21 +199,28 @@ namespace Microsoft.VisualStudio.ProjectSystem.LanguageServices
                 cancellationToken.ThrowIfCancellationRequested();
             }
 
-            var applyChangesToWorkspaceContext = evaluation ? IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectEvaluationAsync(ApplyProjectEvaluation) : IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectBuildAsync(ApplyProjectBuild);
+            var applyChangesToWorkspaceContext = handlerType switch
+            {
+                WorkspaceContextHandlerType.Evaluation => IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectEvaluationAsync(ApplyProjectEvaluation),
+                WorkspaceContextHandlerType.ProjectBuild => IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectBuildAsync(ApplyProjectBuild),
+                WorkspaceContextHandlerType.SourceItems => IApplyChangesToWorkspaceContextFactory.ImplementApplySourceItemsAsync(ApplyProjectEvaluation), // ApplyProjectEvaluation works for source items as they share a signature
+                _ => throw new NotImplementedException()
+            };
 
             instance = await CreateInitializedInstanceAsync(applyChangesToWorkspaceContext: applyChangesToWorkspaceContext);
 
             var update = IProjectVersionedValueFactory.Create<(ConfiguredProject, IProjectSubscriptionUpdate, IProjectBuildSnapshot)>(default);
             await Assert.ThrowsAsync<OperationCanceledException>(() =>
             {
-                return instance.OnProjectChangedAsync(update, evaluation);
+                return instance.OnProjectChangedAsync(update, handlerType);
             });
         }
 
         [Theory]
-        [InlineData(true)]      // Evaluation
-        [InlineData(false)]     // Project Build
-        public async Task OnProjectChangedAsync_PassesProjectUpdate(bool evaluation)
+        [InlineData(WorkspaceContextHandlerType.Evaluation)]
+        [InlineData(WorkspaceContextHandlerType.ProjectBuild)]
+        [InlineData(WorkspaceContextHandlerType.SourceItems)]
+        internal async Task OnProjectChangedAsync_PassesProjectUpdate(WorkspaceContextHandlerType handlerType)
         {
             IProjectVersionedValue<IProjectSubscriptionUpdate>? subscriptionResult = null;
 
@@ -219,24 +234,32 @@ namespace Microsoft.VisualStudio.ProjectSystem.LanguageServices
                 subscriptionResult = u;
             }
 
-            var applyChangesToWorkspaceContext = evaluation ? IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectEvaluationAsync(ApplyProjectEvaluation) : IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectBuildAsync(ApplyProjectBuild);
+            var applyChangesToWorkspaceContext = handlerType switch
+            {
+                WorkspaceContextHandlerType.Evaluation => IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectEvaluationAsync(ApplyProjectEvaluation),
+                WorkspaceContextHandlerType.ProjectBuild => IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectBuildAsync(ApplyProjectBuild),
+                WorkspaceContextHandlerType.SourceItems => IApplyChangesToWorkspaceContextFactory.ImplementApplySourceItemsAsync(ApplyProjectEvaluation), // ApplyProjectEvaluation works for source items as they share a signature
+                _ => throw new NotImplementedException()
+            };
 
             var instance = await CreateInitializedInstanceAsync(applyChangesToWorkspaceContext: applyChangesToWorkspaceContext);
 
             var buildSnapshot = Mock.Of<IProjectBuildSnapshot>();
             var subscription = IProjectSubscriptionUpdateFactory.CreateEmpty();
             var update = IProjectVersionedValueFactory.Create<(ConfiguredProject, IProjectSubscriptionUpdate, IProjectBuildSnapshot)>((null!, subscription, buildSnapshot));
-            await instance.OnProjectChangedAsync(update, evaluation);
+            await instance.OnProjectChangedAsync(update, handlerType);
 
             Assert.Same(subscriptionResult!.Value, subscription);
         }
 
         [Theory] // Evaluation/Project Build       IsActiveContext
-        [InlineData(true,                          true)]
-        [InlineData(true,                          false)]
-        [InlineData(false,                         true)]
-        [InlineData(false,                         false)]
-        public async Task OnProjectChangedAsync_RespectsIsActiveContext(bool evaluation, bool isActiveContext)
+        [InlineData(WorkspaceContextHandlerType.Evaluation, true)]
+        [InlineData(WorkspaceContextHandlerType.Evaluation, false)]
+        [InlineData(WorkspaceContextHandlerType.ProjectBuild, true)]
+        [InlineData(WorkspaceContextHandlerType.ProjectBuild, false)]
+        [InlineData(WorkspaceContextHandlerType.SourceItems, true)]
+        [InlineData(WorkspaceContextHandlerType.SourceItems, false)]
+        internal async Task OnProjectChangedAsync_RespectsIsActiveContext(WorkspaceContextHandlerType handlerType, bool isActiveContext)
         {
             bool? isActiveContextResult = null;
 
@@ -251,12 +274,18 @@ namespace Microsoft.VisualStudio.ProjectSystem.LanguageServices
             }
 
             var activeWorkspaceProjectContextTracker = IActiveEditorContextTrackerFactory.ImplementIsActiveEditorContext(context => isActiveContext);
-            var applyChangesToWorkspaceContext = evaluation ? IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectEvaluationAsync(ApplyProjectEvaluation) : IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectBuildAsync(ApplyProjectBuild);
+            var applyChangesToWorkspaceContext = handlerType switch
+            {
+                WorkspaceContextHandlerType.Evaluation => IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectEvaluationAsync(ApplyProjectEvaluation),
+                WorkspaceContextHandlerType.ProjectBuild => IApplyChangesToWorkspaceContextFactory.ImplementApplyProjectBuildAsync(ApplyProjectBuild),
+                WorkspaceContextHandlerType.SourceItems => IApplyChangesToWorkspaceContextFactory.ImplementApplySourceItemsAsync(ApplyProjectEvaluation), // ApplyProjectEvaluation works for source items as they share a signature
+                _ => throw new NotImplementedException()
+            };
 
             var instance = await CreateInitializedInstanceAsync(applyChangesToWorkspaceContext: applyChangesToWorkspaceContext, activeWorkspaceProjectContextTracker: activeWorkspaceProjectContextTracker);
 
             var update = IProjectVersionedValueFactory.Create<(ConfiguredProject, IProjectSubscriptionUpdate, IProjectBuildSnapshot)>(default);
-            await instance.OnProjectChangedAsync(update, evaluation);
+            await instance.OnProjectChangedAsync(update, handlerType);
 
             Assert.Equal(isActiveContext, isActiveContextResult);
         }

@@ -34,5 +34,15 @@ namespace Microsoft.VisualStudio.ProjectSystem.LanguageServices
 
             return mock.Object;
         }
+
+        public static IApplyChangesToWorkspaceContext ImplementApplySourceItemsAsync(Action<IProjectVersionedValue<IProjectSubscriptionUpdate>, ContextState, CancellationToken> action)
+        {
+            var mock = new Mock<IApplyChangesToWorkspaceContext>();
+            mock.Setup(c => c.ApplySourceItemsAsync(It.IsAny<IProjectVersionedValue<IProjectSubscriptionUpdate>>(), It.IsAny<ContextState>(), It.IsAny<CancellationToken>()))
+                .Callback(action)
+                .Returns(Task.CompletedTask);
+
+            return mock.Object;
+        }
     }
 }

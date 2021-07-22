@@ -13,7 +13,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.LanguageServices.Handlers
     ///     Handles changes to dynamic items, such as Razor CSHTML files.
     /// </summary>
     [Export(typeof(IWorkspaceContextHandler))]
-    internal class DynamicItemHandler : AbstractWorkspaceContextHandler, IProjectEvaluationHandler
+    internal class DynamicItemHandler : AbstractWorkspaceContextHandler, ISourceItemsHandler
     {
         private const string RazorPagesExtension = ".cshtml";
         private const string RazorComponentsExtension = ".razor";
@@ -26,48 +26,49 @@ namespace Microsoft.VisualStudio.ProjectSystem.LanguageServices.Handlers
             _project = project;
         }
 
-        public string ProjectEvaluationRule
-        {
-            get { return Content.SchemaName; }
-        }
-
-        public void Handle(IComparable version, IProjectChangeDescription projectChange, ContextState state, IProjectDiagnosticOutputService logger)
+        public void Handle(IComparable version, IImmutableDictionary<string, IProjectChangeDescription> projectChanges, ContextState state, IProjectDiagnosticOutputService logger)
         {
             Requires.NotNull(version, nameof(version));
-            Requires.NotNull(projectChange, nameof(projectChange));
+            Requires.NotNull(projectChanges, nameof(projectChanges));
             Requires.NotNull(logger, nameof(logger));
 
             VerifyInitialized();
 
-            IProjectChangeDiff difference = HandlerServices.NormalizeRenames(projectChange.Difference);
-
-            foreach (string includePath in difference.RemovedItems)
+            foreach (var (_, projectChange) in projectChanges)
             {
-                if (IsDynamicFile(includePath))
+                if (!projectChange.Difference.AnyChanges)
+                    continue;
+
+                IProjectChangeDiff difference = HandlerServices.NormalizeRenames(projectChange.Difference);
+
+                foreach (string includePath in difference.RemovedItems)
                 {
-                    RemoveFromContextIfPresent(includePath, logger);
+                    if (IsDynamicFile(includePath))
+                    {
+                        RemoveFromContextIfPresent(includePath, logger);
+                    }
                 }
-            }
 
-            foreach (string includePath in difference.AddedItems)
-            {
-                if (IsDynamicFile(includePath))
+                foreach (string includePath in difference.AddedItems)
                 {
-                    IImmutableDictionary<string, string> metadata = projectChange.After.Items.GetValueOrDefault(includePath, ImmutableStringDictionary<string>.EmptyOrdinal);
+                    if (IsDynamicFile(includePath))
+                    {
+                        IImmutableDictionary<string, string> metadata = projectChange.After.Items.GetValueOrDefault(includePath, ImmutableStringDictionary<string>.EmptyOrdinal);
 
-                    AddToContextIfNotPresent(includePath, metadata, logger);
+                        AddToContextIfNotPresent(includePath, metadata, logger);
+                    }
                 }
-            }
 
-            // We Remove then Add changed items to pick up the Linked metadata
-            foreach (string includePath in difference.ChangedItems)
-            {
-                if (IsDynamicFile(includePath))
+                // We Remove then Add changed items to pick up the Linked metadata
+                foreach (string includePath in difference.ChangedItems)
                 {
-                    IImmutableDictionary<string, string> metadata = projectChange.After.Items.GetValueOrDefault(includePath, ImmutableStringDictionary<string>.EmptyOrdinal);
+                    if (IsDynamicFile(includePath))
+                    {
+                        IImmutableDictionary<string, string> metadata = projectChange.After.Items.GetValueOrDefault(includePath, ImmutableStringDictionary<string>.EmptyOrdinal);
 
-                    RemoveFromContextIfPresent(includePath, logger);
-                    AddToContextIfNotPresent(includePath, metadata, logger);
+                        RemoveFromContextIfPresent(includePath, logger);
+                        AddToContextIfNotPresent(includePath, metadata, logger);
+                    }
                 }
             }
         }
