@@ -348,7 +348,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
                 Assumes.Present(_project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject);
 
                 // Nuget should not wait for projects that failed DTB
-                if (SourceBlock.Completion.IsFaulted || SourceBlock.Completion.IsCompleted)
+                if (!_enabled || SourceBlock.Completion.IsFaulted || SourceBlock.Completion.IsCompleted)
                 {
                     return false;
                 }
