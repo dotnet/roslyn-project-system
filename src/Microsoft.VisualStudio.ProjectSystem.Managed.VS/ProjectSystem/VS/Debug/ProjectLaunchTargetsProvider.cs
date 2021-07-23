@@ -3,13 +3,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.Buffers.PooledObjects;
-using Microsoft.VisualStudio.HotReload.Components.DeltaApplier;
 using Microsoft.VisualStudio.IO;
 using Microsoft.VisualStudio.ProjectSystem.Debug;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
@@ -17,7 +14,6 @@ using Microsoft.VisualStudio.ProjectSystem.Utilities;
 using Microsoft.VisualStudio.ProjectSystem.VS.HotReload;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Task = System.Threading.Tasks.Task;
@@ -36,8 +32,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Debug
         IDebugProfileLaunchTargetsProvider,
         IDebugProfileLaunchTargetsProvider2,
         IDebugProfileLaunchTargetsProvider3,
-        IDebugProfileLaunchTargetsProvider4,
-        IProjectHotReloadSessionCallback
+        IDebugProfileLaunchTargetsProvider4
     {
         private static readonly char[] s_escapedChars = new[] { '^', '<', '>', '&' };
         private readonly ConfiguredProject _project;
@@ -50,11 +45,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Debug
         private readonly IProjectThreadingService _threadingService;
         private readonly IVsUIService<IVsDebugger10> _debugger;
         private readonly IRemoteDebuggerAuthenticationService _remoteDebuggerAuthenticationService;
-        private readonly IProjectHotReloadAgent _projectHotReloadAgent;
-        private readonly Lazy<IHotReloadDiagnosticOutputService> _hotReloadDiagnosticOutputService;
-
-        private HotReloadState? _pendingHotReloadSession;
-        private HotReloadState? _activeHotReloadSession;
+        private readonly Lazy<IProjectHotReloadSessionManager> _hotReloadSessionManager;
 
         [ImportingConstructor]
         public ProjectLaunchTargetsProvider(
@@ -68,8 +59,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Debug
             IProjectThreadingService threadingService,
             IVsUIService<SVsShellDebugger, IVsDebugger10> debugger,
             IRemoteDebuggerAuthenticationService remoteDebuggerAuthenticationService,
-            IProjectHotReloadAgent projectHotReloadAgent,
-            Lazy<IHotReloadDiagnosticOutputService> hotReloadDiagnosticOutputService)
+            Lazy<IProjectHotReloadSessionManager> hotReloadSessionManager)
         {
             _project = project;
             _unconfiguredProjectVsServices = unconfiguredProjectVsServices;
@@ -81,8 +71,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Debug
             _threadingService = threadingService;
             _debugger = debugger;
             _remoteDebuggerAuthenticationService = remoteDebuggerAuthenticationService;
-            _projectHotReloadAgent = projectHotReloadAgent;
-            _hotReloadDiagnosticOutputService = hotReloadDiagnosticOutputService;
+            _hotReloadSessionManager = hotReloadSessionManager;
         }
 
         private Task<ConfiguredProject?> GetConfiguredProjectForDebugAsync() =>
@@ -102,14 +91,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Debug
             throw new InvalidOperationException($"Wrong overload of {nameof(OnBeforeLaunchAsync)} called.");
         }
 
-        public async Task OnBeforeLaunchAsync(DebugLaunchOptions launchOptions, ILaunchProfile profile, IReadOnlyList<IDebugLaunchSettings> debugLaunchSettings)
-        {
-            if (_activeHotReloadSession is not null)
-            {
-                await _activeHotReloadSession.StopSessionAsync();
-                _activeHotReloadSession = null;
-            }
-        }
+        public Task OnBeforeLaunchAsync(DebugLaunchOptions launchOptions, ILaunchProfile profile, IReadOnlyList<IDebugLaunchSettings> debugLaunchSettings)
+            => Task.CompletedTask;
 
         /// <summary>
         /// Called just after the launch to do additional work (put up ui, do special configuration etc).
@@ -121,16 +104,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Debug
 
         public async Task OnAfterLaunchAsync(DebugLaunchOptions launchOptions, ILaunchProfile profile, IReadOnlyList<VsDebugTargetProcessInfo> processInfos)
         {
-            await TaskScheduler.Default;
-
-            if (_pendingHotReloadSession is not null)
-            {
-                await _pendingHotReloadSession.AttachToProcessAsync((int)processInfos[0].dwProcessId);
-                _ = _pendingHotReloadSession.StartSessionAsync();
-
-                _activeHotReloadSession = _pendingHotReloadSession;
-                _pendingHotReloadSession = null;
-            }
+            await _hotReloadSessionManager.Value.ActivateSessionAsync((int)processInfos[0].dwProcessId);
         }
 
         private Task<bool> IsClassLibraryAsync() => IsOutputTypeAsync(ConfigurationGeneral.OutputTypeValues.Library);
@@ -459,20 +433,11 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Debug
             if (IsRunProjectCommand(resolvedProfile)
                 && resolvedProfile.IsHotReloadEnabled()
                 && (launchOptions & DebugLaunchOptions.NoDebug) == DebugLaunchOptions.NoDebug
-                && await DebugFrameworkSupportsHotReloadAsync()
-                && await GetDebugFrameworkVersionAsync() is string frameworkVersion)
+                && await _hotReloadSessionManager.Value.TryCreatePendingSessionAsync(settings.Environment))
             {
-                string id = Path.GetFileNameWithoutExtension(_unconfiguredProjectVsServices.Project.FullPath);
-                IProjectHotReloadSession? projectHotReloadSession = _projectHotReloadAgent.CreateHotReloadSession(id, frameworkVersion, this);
-                if (projectHotReloadSession is not null)
-                {
-                    await projectHotReloadSession.ApplyLaunchVariablesAsync(settings.Environment, default);
-                    _pendingHotReloadSession = new HotReloadState(id, projectHotReloadSession, _hotReloadDiagnosticOutputService.Value);
-                }
-            }
-            else
-            {
-                _pendingHotReloadSession = null;
+                // TODO:
+                // We want Hot Reload and the session manager successfully created a pending session.
+                // Perform any other work related to setting up Hot Reload.
             }
 
             if (settings.Environment.Count > 0)
@@ -741,165 +706,9 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.Debug
                    targetFramework.StartsWith(NetStandardPrefix, StringComparisons.FrameworkIdentifiers);
         }
 
-        private async Task<string?> GetDebugFrameworkVersionAsync()
-        {
-            ConfiguredProject? configuredProjectForDebug = await GetConfiguredProjectForDebugAsync();
-            if (configuredProjectForDebug is null)
-            {
-                return null;
-            }
-
-            Assumes.Present(configuredProjectForDebug.Services.ProjectPropertiesProvider);
-            IProjectProperties commonProperties = configuredProjectForDebug.Services.ProjectPropertiesProvider.GetCommonProperties();
-            string targetFrameworkVersion = await commonProperties.GetEvaluatedPropertyValueAsync(ConfigurationGeneral.TargetFrameworkVersionProperty);
-
-            if (targetFrameworkVersion.StartsWith("v", StringComparison.OrdinalIgnoreCase))
-            {
-                targetFrameworkVersion = targetFrameworkVersion.Substring(startIndex: 1);
-            }
-
-            return targetFrameworkVersion;
-        }
-
-        private async Task<bool> DebugFrameworkSupportsHotReloadAsync()
-        {
-            ConfiguredProject? configuredProjectForDebug = await GetConfiguredProjectForDebugAsync();
-            if (configuredProjectForDebug is null)
-            {
-                return false;
-            }
-
-            return configuredProjectForDebug.Capabilities.AppliesTo("SupportsHotReload");
-        }
-
-        // TODO: Support restarting the session.
-        public bool SupportsRestart => false;
-
-        public Task OnAfterChangesAppliedAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task<bool> StopProjectAsync(CancellationToken cancellationToken)
-        {
-            // TODO: do we need to stop the session, or has someone already done that for us?
-            return TaskResult.False;
-        }
-
-        public Task<bool> RestartProjectAsync(CancellationToken cancellationToken)
-        {
-            // TODO: do we need to stop the session, or has someone already done that for us?
-            return TaskResult.False;
-        }
-
-        public IDeltaApplier? GetDeltaApplier()
-        {
-            return null;
-        }
-
         private enum StringState
         {
             NormalCharacter, EscapedCharacter, QuotedString, QuotedStringEscapedCharacter
-        }
-
-        private class HotReloadState
-        {
-            private readonly string _sessionId;
-            private readonly IHotReloadDiagnosticOutputService _diagnosticOutputService;
-            private Process? _process;
-            private IProjectHotReloadSession? _session;
-
-            public HotReloadState(string sessionId, IProjectHotReloadSession session, IHotReloadDiagnosticOutputService diagnosticOutputService)
-            {
-                _sessionId = sessionId;
-                _session = session;
-                _diagnosticOutputService = diagnosticOutputService;
-            }
-
-            public async Task AttachToProcessAsync(int processId)
-            {
-                await _diagnosticOutputService.WriteLineAsync($"{_sessionId}: Attaching to process '{processId}'.");
-
-                try
-                {
-                    Process? process = Process.GetProcessById(processId);
-                    process.Exited += OnProcessExited;
-                    process.EnableRaisingEvents = true;
-
-                    if (process.HasExited)
-                    {
-                        await _diagnosticOutputService.WriteLineAsync($"{_sessionId}: The process has already exited.");
-                        process.Exited -= OnProcessExited;
-                        process = null;
-                    }
-
-                    _process = process;
-                }
-                catch (Exception ex)
-                {
-                    await _diagnosticOutputService.WriteLineAsync($"{_sessionId}: Error while attaching to process '{processId}':\r\n{ex.GetType()}\r\n{ex.Message}");
-                }
-            }
-
-            public async Task StartSessionAsync()
-            {
-                if (_process is null)
-                {
-                    await _diagnosticOutputService.WriteLineAsync($"{_sessionId}: Unable to start Hot Reload session: no active process.");
-                    return;
-                }
-
-                if (_session is null)
-                {
-                    await _diagnosticOutputService.WriteLineAsync($"{_sessionId}: Unable to start Hot Reload session: the session has already been stopped.");
-                    return;
-                }
-
-                await _session.StartSessionAsync(default);
-            }
-
-            public async Task StopSessionAsync()
-            {
-                try
-                {
-                    if (_session is not null)
-                    {
-                        await _session.StopSessionAsync(default);
-                        _session = null;
-                    }
-
-                    if (_process is not null)
-                    {
-                        await _diagnosticOutputService.WriteLineAsync($"{_sessionId}: Attempting to exit the process.");
-                        if (!_process.CloseMainWindow())
-                        {
-                            await _diagnosticOutputService.WriteLineAsync($"{_sessionId}: Attempting to kill the process.");
-                            _process.Kill();
-                        }
-
-                        _process = null;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await _diagnosticOutputService.WriteLineAsync($"{_sessionId}: Error while stopping the session:\r\n{ex.GetType()}\r\n{ex.Message}");
-                }
-            }
-
-#pragma warning disable VSTHRD100 // Avoid async void methods
-            private async void OnProcessExited(object sender, EventArgs e)
-#pragma warning restore VSTHRD100 // Avoid async void methods
-            {
-                await _diagnosticOutputService.WriteLineAsync($"{_sessionId}: The process has exited.");
-
-                _process = null;
-
-                if (_session is not null)
-                {
-                    _ = _session.StopSessionAsync(default);
-                    _session = null;
-                }
-            }
         }
     }
 }

@@ -12,7 +12,6 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.HotReload
 {
     internal class ProjectHotReloadSession : IManagedHotReloadAgent, IProjectHotReloadSession
     {
-        private readonly string _id;
         private readonly string _runtimeVersion;
         private readonly Lazy<IHotReloadAgentManagerClient> _hotReloadAgentManagerClient;
         private readonly Lazy<IHotReloadDiagnosticOutputService> _hotReloadOutputService;
@@ -23,14 +22,14 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.HotReload
         private IDeltaApplier? _deltaApplier;
 
         public ProjectHotReloadSession(
-            string id,
+            string name,
             string runtimeVersion,
             Lazy<IHotReloadAgentManagerClient> hotReloadAgentManagerClient,
             Lazy<IHotReloadDiagnosticOutputService> hotReloadOutputService,
             Lazy<IManagedDeltaApplierCreator> deltaApplierCreator,
             IProjectHotReloadSessionCallback callback)
         {
-            _id = id;
+            Name = name;
             _runtimeVersion = runtimeVersion;
             _hotReloadAgentManagerClient = hotReloadAgentManagerClient;
             _hotReloadOutputService = hotReloadOutputService;
@@ -39,6 +38,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.HotReload
         }
 
         // IProjectHotReloadSession
+
+        public string Name { get; }
 
         public async Task ApplyChangesAsync(CancellationToken cancellationToken)
         {
@@ -185,7 +186,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.HotReload
 
         private Task WriteToOutputWindowAsync(string message)
         {
-            return _hotReloadOutputService.Value.WriteLineAsync($"{_id}: {message}");
+            return _hotReloadOutputService.Value.WriteLineAsync($"{Name}: {message}");
         }
 
         private void EnsureDeltaApplierforSession()

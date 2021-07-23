@@ -8,6 +8,7 @@ Microsoft.VisualStudio.ProjectSystem.VS.HotReload.IProjectHotReloadAgent.CreateH
 Microsoft.VisualStudio.ProjectSystem.VS.HotReload.IProjectHotReloadSession
 Microsoft.VisualStudio.ProjectSystem.VS.HotReload.IProjectHotReloadSession.ApplyChangesAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
 Microsoft.VisualStudio.ProjectSystem.VS.HotReload.IProjectHotReloadSession.ApplyLaunchVariablesAsync(System.Collections.Generic.IDictionary<string!, string!>! envVars, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<bool>!
+Microsoft.VisualStudio.ProjectSystem.VS.HotReload.IProjectHotReloadSession.Name.get -> string!
 Microsoft.VisualStudio.ProjectSystem.VS.HotReload.IProjectHotReloadSession.StartSessionAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
 Microsoft.VisualStudio.ProjectSystem.VS.HotReload.IProjectHotReloadSession.StopSessionAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
 Microsoft.VisualStudio.ProjectSystem.VS.HotReload.IProjectHotReloadSessionCallback
