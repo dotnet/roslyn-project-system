@@ -289,6 +289,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
         {
             _enabled = false;
 
+            _whenNominatedTask?.TrySetCanceled();
+
             return Task.CompletedTask;
         }
 
@@ -364,12 +366,6 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
                 ConfiguredProject? activeConfiguredProject = _project.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
 
-                // Nuget should wait until the project at least nominates once.
-                if (SourceBlock.Completion.IsCompleted)
-                {
-                    return false;
-                }
-
                 // After the first nomination, we should check the saved nominated version
                 return IsSavedNominationEmptyOrOlder(activeConfiguredProject);
             }
@@ -386,6 +382,11 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             if (!_savedNominatedConfiguredVersion.TryGetValue(activeConfiguredProject.ProjectConfiguration,
                     out IComparable latestSavedVersionForActiveConfiguredProject) ||
                 activeConfiguredProject.ProjectVersion.IsLaterThan(latestSavedVersionForActiveConfiguredProject))
+            {
+                return true;
+            }
+
+            if (_savedNominatedConfiguredVersion.Count == 1)
             {
                 return true;
             }
@@ -428,6 +429,11 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             if (activeProjectConfigurationVersionFromConfiguredInputs is null ||
                 activeConfiguredProject.ProjectVersion.IsLaterThan(
                     activeProjectConfigurationVersionFromConfiguredInputs))
+            {
+                return true;
+            }
+
+            if (configuredInputs.Count == 1)
             {
                 return true;
             }
