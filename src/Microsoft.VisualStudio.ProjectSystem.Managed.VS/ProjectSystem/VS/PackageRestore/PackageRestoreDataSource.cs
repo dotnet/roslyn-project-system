@@ -113,11 +113,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
             // Register before this project receives any data flows containing possible nominations.
             // This is needed because we need to register before any nuget restore or before the solution load.
 #pragma warning disable RS0030 // Do not used banned APIs
-            var registerRestoreInfoSourceTask = Task.Run(() =>
-            {
-                _ = _solutionRestoreService4
-                    .RegisterRestoreInfoSourceAsync(this, _projectAsynchronousTasksService.UnloadCancellationToken);
-            });
+            var registerRestoreInfoSourceTask = Task.Run(() => _solutionRestoreService4.RegisterRestoreInfoSourceAsync(this, _projectAsynchronousTasksService.UnloadCancellationToken));
 #pragma warning restore RS0030 // Do not used banned APIs
 
             _project.Services.FaultHandler.Forget(registerRestoreInfoSourceTask, _project, ProjectFaultSeverity.Recoverable);
