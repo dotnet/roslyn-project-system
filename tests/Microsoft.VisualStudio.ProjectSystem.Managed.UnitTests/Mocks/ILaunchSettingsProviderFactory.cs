@@ -26,6 +26,8 @@ namespace Microsoft.VisualStudio.ProjectSystem
         /// <param name="addOrUpdateProfileCallback">An optional method to call when a profile is added or updated.</param>
         /// <param name="removeProfileCallback">An optional methods to call when a profile is removed.</param>
         /// <param name="tryUpdateProfileCallback">An optional method to call when a profile is updated.</param>
+        /// <param name="updateGlobalSettingsCallback">An optional method to call when a global setting is updated.</param>
+        /// <param name="globalSettings">The initial set of global settings to expose through the provider.</param>
         public static ILaunchSettingsProvider3 Create(
             string? activeProfileName = null,
             IEnumerable<ILaunchProfile>? launchProfiles = null,
@@ -34,13 +36,17 @@ namespace Microsoft.VisualStudio.ProjectSystem
             Func<ImmutableList<ILaunchProfile>, ImmutableList<ILaunchProfile>>? getProfilesCallback = null,
             Action<ILaunchProfile, bool>? addOrUpdateProfileCallback = null,
             Action<string>? removeProfileCallback = null,
-            Action<string, Action<IWritableLaunchProfile>>? tryUpdateProfileCallback = null)
+            Action<string, Action<IWritableLaunchProfile>>? tryUpdateProfileCallback = null,
+            Func<ImmutableDictionary<string, object>, ImmutableDictionary<string, object?>>? updateGlobalSettingsCallback = null,
+            ImmutableDictionary<string, object>? globalSettings = null)
         {
             var launchSettingsMock = new Mock<ILaunchSettings>();
 
             var initialLaunchProfiles = launchProfiles is not null
                 ? launchProfiles.ToImmutableList()
                 : ImmutableList<ILaunchProfile>.Empty;
+
+            var initialGlobalSettings = globalSettings ?? ImmutableDictionary<string, object>.Empty;
 
             if (getProfilesCallback is not null)
             {
@@ -49,6 +55,11 @@ namespace Microsoft.VisualStudio.ProjectSystem
             else
             {
                 launchSettingsMock.Setup(t => t.Profiles).Returns(initialLaunchProfiles);
+            }
+
+            if (initialGlobalSettings is not null)
+            {
+                launchSettingsMock.Setup(t => t.GlobalSettings).Returns(initialGlobalSettings);
             }
 
             if (activeProfileName != null)
@@ -104,14 +115,40 @@ namespace Microsoft.VisualStudio.ProjectSystem
                     });
             }
 
+            var settingsProvider3Mock = settingsProviderMock.As<ILaunchSettingsProvider3>();
             if (tryUpdateProfileCallback is not null)
             {
-                var settingsProvider3Mock = settingsProviderMock.As<ILaunchSettingsProvider3>();
                 settingsProvider3Mock.Setup(t => t.TryUpdateProfileAsync(It.IsAny<string>(), It.IsAny<Action<IWritableLaunchProfile>>()))
                     .Returns<string, Action<IWritableLaunchProfile>>((name, action) =>
                     {
                         tryUpdateProfileCallback(name, action);
                         return TaskResult.True;
+                    });
+            }
+            else
+            {
+                settingsProvider3Mock.Setup(t => t.TryUpdateProfileAsync(It.IsAny<string>(), It.IsAny<Action<IWritableLaunchProfile>>()))
+                    .Returns<string, Action<IWritableLaunchProfile>>((name, action) =>
+                    {
+                        var profile = new WritableLaunchProfile { Name = name };
+                        action(profile);
+                        return TaskResult.True;
+                    });
+
+            }
+
+            if (updateGlobalSettingsCallback is not null)
+            {
+                settingsProvider3Mock.Setup(t => t.UpdateGlobalSettingsAsync(It.IsAny<Func<ImmutableDictionary<string, object>, ImmutableDictionary<string, object?>>>()))
+                    .Returns(updateGlobalSettingsCallback);
+            }
+            else
+            {
+                settingsProvider3Mock.Setup(t => t.UpdateGlobalSettingsAsync(It.IsAny<Func<ImmutableDictionary<string, object>, ImmutableDictionary<string, object?>>>()))
+                    .Returns<Func<ImmutableDictionary<string, object>, ImmutableDictionary<string, object?>>>(updateFunc =>
+                    {
+                        _ = updateFunc(ImmutableDictionary<string, object>.Empty);
+                        return Task.CompletedTask;
                     });
             }
 

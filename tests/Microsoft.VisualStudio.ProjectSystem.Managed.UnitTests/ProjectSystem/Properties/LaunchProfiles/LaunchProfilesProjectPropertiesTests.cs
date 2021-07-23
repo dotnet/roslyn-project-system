@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
+using Microsoft.Build.Framework.XamlTypes;
 using Microsoft.VisualStudio.Mocks;
 using Microsoft.VisualStudio.ProjectSystem.Debug;
 using Xunit;
@@ -256,6 +257,38 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
         }
 
         [Fact]
+        public async Task WhenRetrievingAnExtensionProperty_TheRuleIsPassedToTheExtensionValueProvider()
+        {
+            bool rulePassed = false;
+            var extensionValueProvider = ILaunchProfileExtensionValueProviderFactory.Create(
+                (propertyName, profile, globals, rule) =>
+                {
+                    rulePassed = rule is not null;
+                    return "alpha";
+                });
+
+            var metadata = ILaunchProfileExtensionValueProviderMetadataFactory.Create("MyProperty");
+
+            var lazy = new Lazy<ILaunchProfileExtensionValueProvider, ILaunchProfileExtensionValueProviderMetadata>(
+                () => extensionValueProvider,
+                metadata);
+
+            var properties = new LaunchProfileProjectProperties(
+                DefaultTestProjectPath,
+                "Profile1",
+                CreateDefaultTestLaunchSettings(),
+                ImmutableArray.Create(lazy),
+                EmptyGlobalSettingExtensionValueProviders);
+
+            var rule = new Rule();
+            properties.SetRuleContext(rule);
+
+            var propertyValue = await properties.GetEvaluatedPropertyValueAsync("MyProperty");
+            Assert.True(rulePassed);
+            Assert.Equal(expected: "alpha", actual: propertyValue);
+        }
+
+        [Fact]
         public async Task WhenRetrievingPropertyNames_LaunchProfileExtensionNamesAreIncludedForDefinedProperties()
         {
             var alphaValueProvider = ILaunchProfileExtensionValueProviderFactory.Create(
@@ -291,7 +324,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
             Assert.DoesNotContain("BetaProperty", names);
         }
 
-        [Fact(Skip = "I got ahead of myself and setting property values is not yet supported")]
+        [Fact]
         public async Task WhenSettingAnExtensionProperty_TheExtensionValueProviderIsCalled()
         {
             string? updatedPropertyName = null;
@@ -322,6 +355,34 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
         }
 
         [Fact]
+        public async Task WhenSettingAnExtensionProperty_TheRuleIsPassedToTheExtensionValueProvider()
+        {
+            bool rulePassed = false;
+            var extensionValueProvider = ILaunchProfileExtensionValueProviderFactory.Create(
+                onSetPropertyValue: (propertyName, value, profile, globals, rule) =>
+                {
+                    rulePassed = rule is not null;
+                });
+            var metadata = ILaunchProfileExtensionValueProviderMetadataFactory.Create("MyProperty");
+
+            var lazy = new Lazy<ILaunchProfileExtensionValueProvider, ILaunchProfileExtensionValueProviderMetadata>(
+                () => extensionValueProvider,
+                metadata);
+
+            var properties = new LaunchProfileProjectProperties(
+                DefaultTestProjectPath,
+                "Profile1",
+                CreateDefaultTestLaunchSettings(),
+                ImmutableArray.Create(lazy),
+                EmptyGlobalSettingExtensionValueProviders);
+            properties.SetRuleContext(new Rule());
+
+            await properties.SetPropertyValueAsync("MyProperty", "alpha");
+
+            Assert.True(rulePassed);
+        }
+
+        [Fact]
         public async Task WhenRetrievingAGlobalProperty_TheExtensionValueProviderIsCalled()
         {
             string? requestedPropertyName = null;
@@ -349,7 +410,36 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
             Assert.Equal(expected: "alpha", actual: propertyValue);
         }
 
-        [Fact(Skip = "I got ahead of myself and setting property values is not yet supported")]
+        [Fact]
+        public async Task WhenRetrievingAGlobalProperty_TheRuleIsPassedToTheExtensionValueProvider()
+        {
+            bool rulePassed = false;
+            var extensionValueProvider = IGlobalSettingExtensionValueProviderFactory.Create(
+                (propertyName, globals, rule) =>
+                {
+                    rulePassed = rule is not null;
+                    return "alpha";
+                });
+            var metadata = ILaunchProfileExtensionValueProviderMetadataFactory.Create("MyProperty");
+
+            var lazy = new Lazy<IGlobalSettingExtensionValueProvider, ILaunchProfileExtensionValueProviderMetadata>(
+                () => extensionValueProvider,
+                metadata);
+
+            var properties = new LaunchProfileProjectProperties(
+                DefaultTestProjectPath,
+                "Profile1",
+                CreateDefaultTestLaunchSettings(),
+                EmptyLaunchProfileExtensionValueProviders,
+                ImmutableArray.Create(lazy));
+            properties.SetRuleContext(new Rule());
+
+            var propertyValue = await properties.GetEvaluatedPropertyValueAsync("MyProperty");
+            Assert.True(rulePassed);
+            Assert.Equal(expected: "alpha", actual: propertyValue);
+        }
+
+        [Fact]
         public async Task WhenSettingAGlobalProperty_TheExtensionValueProviderIsCalled()
         {
             string? updatedPropertyName = null;
@@ -378,6 +468,35 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
 
             Assert.Equal(expected: "MyProperty", actual: updatedPropertyName);
             Assert.Equal(expected: "alpha", actual: updatedPropertyValue);
+        }
+
+        [Fact]
+        public async Task WhenSettingAGlobalProperty_TheRuleIsPassedToTheExtensionValueProvider()
+        {
+            bool rulePassed = false;
+            var extensionValueProvider = IGlobalSettingExtensionValueProviderFactory.Create(
+                onSetPropertyValue: (propertyName, value, globals, rule) =>
+                {
+                    rulePassed = rule is not null;
+                    return ImmutableDictionary<string, object?>.Empty.Add(propertyName, value);
+                });
+            var metadata = ILaunchProfileExtensionValueProviderMetadataFactory.Create("MyProperty");
+
+            var lazy = new Lazy<IGlobalSettingExtensionValueProvider, ILaunchProfileExtensionValueProviderMetadata>(
+                () => extensionValueProvider,
+                metadata);
+
+            var properties = new LaunchProfileProjectProperties(
+                DefaultTestProjectPath,
+                "Profile1",
+                CreateDefaultTestLaunchSettings(),
+                EmptyLaunchProfileExtensionValueProviders,
+                ImmutableArray.Create(lazy));
+            properties.SetRuleContext(new Rule());
+
+            await properties.SetPropertyValueAsync("MyProperty", "alpha");
+
+            Assert.True(rulePassed);
         }
 
         [Fact]
@@ -414,6 +533,157 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
 
             Assert.Contains("AlphaProperty", names);
             Assert.DoesNotContain("BetaProperty", names);
+        }
+
+        [Fact]
+        public async Task WhenRetrievingPropertyNames_PropertiesInOtherSettingsAreIncluded()
+        {
+            var profile1 = new WritableLaunchProfile
+            {
+                Name = "Profile1",
+                OtherSettings = { { "alpha", 1 } }
+            };
+            var launchSettingsProvider = ILaunchSettingsProviderFactory.Create(
+                launchProfiles: new[] { profile1.ToLaunchProfile() });
+
+            var properties = new LaunchProfileProjectProperties(
+                DefaultTestProjectPath,
+                "Profile1",
+                launchSettingsProvider,
+                EmptyLaunchProfileExtensionValueProviders,
+                EmptyGlobalSettingExtensionValueProviders);
+
+            var names = await properties.GetPropertyNamesAsync();
+
+            Assert.Contains("alpha", names);
+        }
+
+        [Fact]
+        public async Task WhenRetrievingPropertyNames_PropertiesInGlobalSettingsAreNotIncluded()
+        {
+            var profile1 = new WritableLaunchProfile
+            {
+                Name = "Profile1",
+                OtherSettings = { { "alpha", 1 } }
+            };
+            var launchSettingsProvider = ILaunchSettingsProviderFactory.Create(
+                launchProfiles: new[] { profile1.ToLaunchProfile() },
+                globalSettings: ImmutableDictionary<string, object>.Empty.Add("beta", "value"));
+
+            var properties = new LaunchProfileProjectProperties(
+                DefaultTestProjectPath,
+                "Profile1",
+                launchSettingsProvider,
+                EmptyLaunchProfileExtensionValueProviders,
+                EmptyGlobalSettingExtensionValueProviders);
+
+            var names = await properties.GetPropertyNamesAsync();
+
+            Assert.DoesNotContain("beta", names);
+        }
+
+        [Fact]
+        public async Task WhenRetrievingValuesFromOtherSettings_ValuesArePropertyConvertedToStrings()
+        {
+            var profile1 = new WritableLaunchProfile
+            {
+                Name = "Profile1",
+                OtherSettings =
+                {
+                    { "anInteger", 1 },
+                    { "aBoolean", true },
+                    { "aString", "Hello, world" },
+                    { "anEnumStoredAsAsAString", "valueOne" },
+                    { "anotherString", "Hi, friends!" }
+                }
+            };
+            var launchSettingsProvider = ILaunchSettingsProviderFactory.Create(
+                launchProfiles: new[] { profile1.ToLaunchProfile() });
+
+            var rule = new Rule
+            {
+                Properties =
+                {
+                    new IntProperty { Name = "anInteger" },
+                    new BoolProperty { Name = "aBoolean" },
+                    new StringProperty { Name = "aString" },
+                    new EnumProperty { Name = "anEnumStoredAsAString" }
+                    // anotherString intentionally not represented
+                }
+            };
+
+            var properties = new LaunchProfileProjectProperties(
+                DefaultTestProjectPath,
+                "Profile1",
+                launchSettingsProvider,
+                EmptyLaunchProfileExtensionValueProviders,
+                EmptyGlobalSettingExtensionValueProviders);
+
+            properties.SetRuleContext(rule);
+
+            var anIntegerValue = await properties.GetEvaluatedPropertyValueAsync("anInteger");
+            Assert.Equal(expected: "1", actual: anIntegerValue);
+
+            var aBooleanValue = await properties.GetEvaluatedPropertyValueAsync("aBoolean");
+            Assert.Equal(expected: "true", actual: aBooleanValue);
+
+            var aStringValue = await properties.GetEvaluatedPropertyValueAsync("aString");
+            Assert.Equal(expected: "Hello, world", actual: aStringValue);
+
+            var anEnumStoredAsAsAStringValue = await properties.GetEvaluatedPropertyValueAsync("anEnumStoredAsAsAString");
+            Assert.Equal(expected: "valueOne", actual: anEnumStoredAsAsAStringValue);
+
+            var anotherStringValue = await properties.GetEvaluatedPropertyValueAsync("anotherString");
+            Assert.Equal(expected: "Hi, friends!", actual: anotherStringValue);
+        }
+
+        [Fact]
+        public async Task WhenSettingValuesNotHandledByExtenders_ValuesOfTheExpectedTypesAreStoredInOtherSettings()
+        {
+            var writableProfile = new WritableLaunchProfile
+            {
+                Name = "Profile1",
+            };
+            var launchSettingsProvider = ILaunchSettingsProviderFactory.Create(
+                launchProfiles: new[] { writableProfile.ToLaunchProfile() },
+                tryUpdateProfileCallback: (profile, action) =>
+                {
+                    // Update writableProfile since we're hanging on to it rather than the profile given us by the mock. 
+                    action(writableProfile);
+                });
+
+            var rule = new Rule
+            {
+                Properties =
+                {
+                    new IntProperty { Name = "anInteger" },
+                    new BoolProperty { Name = "aBoolean" },
+                    new StringProperty { Name = "aString" },
+                    new EnumProperty { Name = "anEnumStoredAsAString" }
+                    // anotherString intentionally not represented
+                }
+            };
+
+            var properties = new LaunchProfileProjectProperties(
+                DefaultTestProjectPath,
+                "Profile1",
+                launchSettingsProvider,
+                EmptyLaunchProfileExtensionValueProviders,
+                EmptyGlobalSettingExtensionValueProviders);
+
+            properties.SetRuleContext(rule);
+
+            await properties.SetPropertyValueAsync("anInteger", "2");
+            await properties.SetPropertyValueAsync("aBoolean", "false");
+            await properties.SetPropertyValueAsync("aString", "Hello, world!");
+            await properties.SetPropertyValueAsync("anEnumStoredAsAString", "valueTwo");
+            await properties.SetPropertyValueAsync("anotherString", "Hello, friends!");
+
+            Assert.Equal(expected: 2, actual: writableProfile.OtherSettings["anInteger"]);
+            Assert.Equal(expected: false, actual: writableProfile.OtherSettings["aBoolean"]);
+            Assert.Equal(expected: "Hello, world!", actual: writableProfile.OtherSettings["aString"]);
+            Assert.Equal(expected: "valueTwo", actual: writableProfile.OtherSettings["anEnumStoredAsAString"]);
+            Assert.Equal(expected: "Hello, friends!", actual: writableProfile.OtherSettings["anotherString"]);
         }
 
         /// <summary>

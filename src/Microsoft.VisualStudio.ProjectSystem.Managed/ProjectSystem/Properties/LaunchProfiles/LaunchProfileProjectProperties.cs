@@ -6,18 +6,19 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Build.Framework.XamlTypes;
+using Microsoft.VisualStudio.ProjectSystem.Debug;
 using Microsoft.VisualStudio.Threading;
-using LaunchProfileValueProviderAndMetadata = System.Lazy<
-    Microsoft.VisualStudio.ProjectSystem.Properties.ILaunchProfileExtensionValueProvider,
-    Microsoft.VisualStudio.ProjectSystem.Properties.ILaunchProfileExtensionValueProviderMetadata>;
 using GlobalSettingValueProviderAndMetadata = System.Lazy<
     Microsoft.VisualStudio.ProjectSystem.Properties.IGlobalSettingExtensionValueProvider,
     Microsoft.VisualStudio.ProjectSystem.Properties.ILaunchProfileExtensionValueProviderMetadata>;
-using Microsoft.VisualStudio.ProjectSystem.Debug;
+using LaunchProfileValueProviderAndMetadata = System.Lazy<
+    Microsoft.VisualStudio.ProjectSystem.Properties.ILaunchProfileExtensionValueProvider,
+    Microsoft.VisualStudio.ProjectSystem.Properties.ILaunchProfileExtensionValueProviderMetadata>;
 
 namespace Microsoft.VisualStudio.ProjectSystem.Properties
 {
-    internal class LaunchProfileProjectProperties : IProjectProperties
+    internal class LaunchProfileProjectProperties : IProjectProperties, IRuleAwareProjectProperties
     {
         private const string CommandNamePropertyName = "CommandName";
         private const string ExecutablePathPropertyName = "ExecutablePath";
@@ -26,6 +27,8 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
         private const string LaunchBrowserPropertyName = "LaunchBrowser";
         private const string LaunchUrlPropertyName = "LaunchUrl";
         private const string EnvironmentVariablesPropertyName = "EnvironmentVariables";
+
+        private Rule? _rule;
 
         /// <remarks>
         /// These correspond to the properties explicitly declared on <see cref="ILaunchProfile"/>
@@ -143,8 +146,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
 
             foreach ((string propertyName, LaunchProfileValueProviderAndMetadata provider) in _launchProfileValueProviders)
             {
-                // TODO: Pass the Rule
-                string propertyValue = provider.Value.OnGetPropertyValue(propertyName, profile, globalSettings, rule: null);
+                string propertyValue = provider.Value.OnGetPropertyValue(propertyName, profile, globalSettings, _rule);
                 if (!Strings.IsNullOrEmpty(propertyValue))
                 {
                     builder.Add(propertyName);
@@ -153,9 +155,16 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
 
             foreach ((string propertyName, GlobalSettingValueProviderAndMetadata provider) in _globalSettingValueProviders)
             {
-                // TODO: Pass the Rule
-                string propertyValue = provider.Value.OnGetPropertyValue(propertyName, globalSettings, rule: null);
+                string propertyValue = provider.Value.OnGetPropertyValue(propertyName, globalSettings, _rule);
                 if (!Strings.IsNullOrEmpty(propertyValue))
+                {
+                    builder.Add(propertyName);
+                }
+            }
+
+            if (profile.OtherSettings is not null)
+            {
+                foreach ((string propertyName, _) in profile.OtherSettings)
                 {
                     builder.Add(propertyName);
                 }
@@ -189,7 +198,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
                 LaunchBrowserPropertyName => profile.LaunchBrowser ? "true" : "false",
                 LaunchUrlPropertyName => profile.LaunchUrl ?? string.Empty,
                 EnvironmentVariablesPropertyName => ConvertDictionaryToString(profile.EnvironmentVariables) ?? string.Empty,
-                _ => GetPropertyValueFromExtenders(propertyName, profile, snapshot.GlobalSettings)
+                _ => GetExtensionPropertyValue(propertyName, profile, snapshot.GlobalSettings)
             };
         }
 
@@ -231,13 +240,39 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
                 return;
             }
 
-            // Finally, check if a global setting extender can handle it.
+            // Then, check if a global setting extender can handle it.
 
             Func<ImmutableDictionary<string, object>, ImmutableDictionary<string, object?>>? globalSettingsUpdateFunction = GetPropertyValueSetterFromGlobalExtenders(propertyName, unevaluatedPropertyValue);
             if (globalSettingsUpdateFunction is not null)
             {
                 await _launchSettingsProvider.UpdateGlobalSettingsAsync(globalSettingsUpdateFunction);
                 return;
+            }
+
+            // Finally, store it in ILaunchProfile.OtherSettings.
+
+            object? valueObject = null;
+            if (_rule?.GetProperty(propertyName) is BaseProperty property)
+            {
+                valueObject = property switch
+                {
+                    BoolProperty => bool.TryParse(unevaluatedPropertyValue, out bool result) ? result : null,
+                    IntProperty => int.TryParse(unevaluatedPropertyValue, out int result) ? result : null,
+                    StringProperty => unevaluatedPropertyValue,
+                    EnumProperty => unevaluatedPropertyValue,
+                    DynamicEnumProperty => unevaluatedPropertyValue,
+                    _ => throw new InvalidOperationException($"{nameof(LaunchProfileProjectProperties)} does not know how to convert strings to `{property.GetType()}`.")
+                };
+            }
+            else
+            {
+                valueObject = unevaluatedPropertyValue;
+            }
+
+            if (valueObject is not null)
+            {
+                profileUpdateAction = p => p.OtherSettings[propertyName] = valueObject;
+                await _launchSettingsProvider.TryUpdateProfileAsync(_context.ItemName, profileUpdateAction);
             }
 
             void setLaunchBrowserProperty(IWritableLaunchProfile profile)
@@ -254,21 +289,71 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
             }
         }
 
-        private string? GetPropertyValueFromExtenders(string propertyName, ILaunchProfile profile, ImmutableDictionary<string, object> globalSettings)
+        public void SetRuleContext(Rule rule)
+        {
+            _rule = rule;
+        }
+
+        private string? GetExtensionPropertyValue(string propertyName, ILaunchProfile profile, ImmutableDictionary<string, object> globalSettings)
         {
             if (_launchProfileValueProviders.TryGetValue(propertyName, out LaunchProfileValueProviderAndMetadata? launchProfileValueProvider))
             {
-                // TODO: Pass the Rule
-                return launchProfileValueProvider.Value.OnGetPropertyValue(propertyName, profile, globalSettings, rule: null);
+                return launchProfileValueProvider.Value.OnGetPropertyValue(propertyName, profile, globalSettings, rule: _rule);
             }
 
             if (_globalSettingValueProviders.TryGetValue(propertyName, out GlobalSettingValueProviderAndMetadata? globalSettingValueProvider))
             {
-                // TODO: Pass the Rule
-                return globalSettingValueProvider.Value.OnGetPropertyValue(propertyName, globalSettings, rule: null);
+                return globalSettingValueProvider.Value.OnGetPropertyValue(propertyName, globalSettings, rule: _rule);
+            }
+
+            return GetOtherSettingsPropertyValue(propertyName, profile);
+        }
+
+        private string? GetOtherSettingsPropertyValue(string propertyName, ILaunchProfile profile)
+        {
+            if (profile.OtherSettings is not null
+                && profile.OtherSettings.TryGetValue(propertyName, out object? valueObject))
+            {
+                if (_rule?.GetProperty(propertyName) is BaseProperty property)
+                {
+                    string? valueString = null;
+                    valueString = property switch
+                    {
+                        BoolProperty => boolToString(valueObject),
+                        IntProperty => intToString(valueObject),
+                        StringProperty => valueObject as string,
+                        EnumProperty => valueObject as string,
+                        DynamicEnumProperty => valueObject as string,
+                        _ => throw new InvalidOperationException($"{nameof(LaunchProfileProjectProperties)} does not know how to convert `{property.GetType()}` to a string.")
+                    };
+
+                    return valueString;
+                }
+
+                return valueObject as string;
             }
 
             return null;
+
+            string? boolToString(object valueObject)
+            {
+                if (valueObject is bool value)
+                {
+                    return value ? "true" : "false";
+                }
+
+                return null;
+            }
+
+            string? intToString(object valueObject)
+            {
+                if (valueObject is int value)
+                {
+                    return value.ToString();
+                }
+
+                return null;
+            }
         }
 
         private async Task<Action<IWritableLaunchProfile>?> GetPropertyValueSetterFromLaunchProfileExtendersAsync(string propertyName, string unevaluatedValue)
@@ -282,8 +367,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
 
                 return profile =>
                 {
-                    // TODO: Pass the Rule
-                    launchProfileValueProvider.Value.OnSetPropertyValue(propertyName, unevaluatedValue, profile, globalSettings, rule: null);
+                    launchProfileValueProvider.Value.OnSetPropertyValue(propertyName, unevaluatedValue, profile, globalSettings, _rule);
                 };
             }
 
@@ -296,8 +380,7 @@ namespace Microsoft.VisualStudio.ProjectSystem.Properties
             {
                 return globalSettings =>
                 {
-                    // TODO: Pass the Rule
-                    return globalSettingValueProvider.Value.OnSetPropertyValue(propertyName, unevaluatedValue, globalSettings, rule: null);
+                    return globalSettingValueProvider.Value.OnSetPropertyValue(propertyName, unevaluatedValue, globalSettings, _rule);
                 };
             }
 
