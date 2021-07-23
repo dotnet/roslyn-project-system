@@ -23,6 +23,20 @@ namespace Microsoft.VisualStudio.ProjectSystem
             return project.Object;
         }
 
+        public static UnconfiguredProject CreateWithActiveConfiguredProjectProvider(IProjectThreadingService threadingService)
+        {
+            var project = CreateDefault(threadingService);
+
+            var activeConfiguredProject = new Mock<IActiveConfiguredProjectProvider>().Object;
+            project.Setup(s => s.Services.ActiveConfiguredProjectProvider).Returns(activeConfiguredProject);
+
+            var configuredProject = new Mock<ConfiguredProject>();
+
+            project.Setup(s => s.Services.ActiveConfiguredProjectProvider!.ActiveConfiguredProject).Returns(configuredProject.Object);
+            project.Setup(s => s.Services.ActiveConfiguredProjectProvider!.ActiveConfiguredProject!.ProjectVersion).Returns(configuredProject.Object.ProjectVersion);
+            return project.Object;
+        }
+
         public static UnconfiguredProject Create(object? hostObject = null,
                                                  string? fullPath = null,
                                                  IProjectConfigurationsService? projectConfigurationsService = null,

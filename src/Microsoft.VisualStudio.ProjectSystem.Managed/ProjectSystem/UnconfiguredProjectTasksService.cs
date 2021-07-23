@@ -64,7 +64,9 @@ namespace Microsoft.VisualStudio.ProjectSystem
 
         public Task SolutionLoadedInHost
         {
+#pragma warning disable VSTHRD110 // Observe result of async calls
             get { return _solutionService?.LoadedInHost.WithCancellation(_tasksService.UnloadCancellationToken) ?? throw new NotSupportedException(); }
+#pragma warning restore VSTHRD110 // Observe result of async calls
         }
 
         public CancellationToken UnloadCancellationToken
