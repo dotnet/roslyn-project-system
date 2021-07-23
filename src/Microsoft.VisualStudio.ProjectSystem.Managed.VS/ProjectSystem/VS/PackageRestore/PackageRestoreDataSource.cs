@@ -284,9 +284,12 @@ namespace Microsoft.VisualStudio.ProjectSystem.VS.PackageRestore
 
         public Task UnloadAsync()
         {
-            _enabled = false;
+            lock (SyncObject)
+            {
+                _enabled = false;
 
-            _whenNominatedTask?.TrySetCanceled();
+                _whenNominatedTask?.TrySetCanceled();
+            }
 
             return Task.CompletedTask;
         }
