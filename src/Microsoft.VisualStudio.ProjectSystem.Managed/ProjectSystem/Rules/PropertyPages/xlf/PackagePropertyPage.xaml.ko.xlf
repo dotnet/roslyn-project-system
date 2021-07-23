@@ -128,13 +128,13 @@
         <note />
       </trans-unit>
       <trans-unit id="StringProperty|PackageIcon|Description">
-        <source>The relative path from the package root to the icon file. In addition to setting this property you need to make sure that the file is included in the package. Image file size is limited to 1 MB. Supported file formats include JPEG and PNG. An image resolution of 128x128 is recommended.</source>
-        <target state="translated">패키지 루트에서 아이콘 파일까지의 상대 경로입니다. 이 속성을 설정하는 것 외에도 파일이 패키지에 포함되어 있는지 확인해야 합니다. 이미지 파일 크기는 1MB로 제한됩니다. 지원되는 파일 형식은 JPEG와 PNG입니다. 128x128 이미지 해상도가 권장됩니다.</target>
+        <source>The icon image for the package. Image file size is limited to 1 MB. Supported file formats include JPEG and PNG. An image resolution of 128x128 is recommended.</source>
+        <target state="needs-review-translation">패키지 루트에서 아이콘 파일까지의 상대 경로입니다. 이 속성을 설정하는 것 외에도 파일이 패키지에 포함되어 있는지 확인해야 합니다. 이미지 파일 크기는 1MB로 제한됩니다. 지원되는 파일 형식은 JPEG와 PNG입니다. 128x128 이미지 해상도가 권장됩니다.</target>
         <note />
       </trans-unit>
       <trans-unit id="StringProperty|PackageIcon|DisplayName">
-        <source>Icon file</source>
-        <target state="translated">아이콘 파일</target>
+        <source>Icon</source>
+        <target state="needs-review-translation">아이콘 파일</target>
         <note />
       </trans-unit>
       <trans-unit id="StringProperty|PackageId|Description">

@@ -128,13 +128,13 @@
         <note />
       </trans-unit>
       <trans-unit id="StringProperty|PackageIcon|Description">
-        <source>The relative path from the package root to the icon file. In addition to setting this property you need to make sure that the file is included in the package. Image file size is limited to 1 MB. Supported file formats include JPEG and PNG. An image resolution of 128x128 is recommended.</source>
-        <target state="translated">Percorso relativo dalla radice del pacchetto al file icona. Oltre a impostare questa proprietà, è necessario assicurarsi che il file sia incluso nel pacchetto. Le dimensioni del file di immagine sono limitate a 1 MB. I formati di file supportati includono JPEG e PNG. È consigliata una risoluzione dell'immagine di 128x128.</target>
+        <source>The icon image for the package. Image file size is limited to 1 MB. Supported file formats include JPEG and PNG. An image resolution of 128x128 is recommended.</source>
+        <target state="needs-review-translation">Percorso relativo dalla radice del pacchetto al file icona. Oltre a impostare questa proprietà, è necessario assicurarsi che il file sia incluso nel pacchetto. Le dimensioni del file di immagine sono limitate a 1 MB. I formati di file supportati includono JPEG e PNG. È consigliata una risoluzione dell'immagine di 128x128.</target>
         <note />
       </trans-unit>
       <trans-unit id="StringProperty|PackageIcon|DisplayName">
-        <source>Icon file</source>
-        <target state="translated">File icona</target>
+        <source>Icon</source>
+        <target state="needs-review-translation">File icona</target>
         <note />
       </trans-unit>
       <trans-unit id="StringProperty|PackageId|Description">

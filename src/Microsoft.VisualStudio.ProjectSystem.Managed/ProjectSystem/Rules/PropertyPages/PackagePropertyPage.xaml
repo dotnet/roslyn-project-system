@@ -91,16 +91,17 @@
                   HelpUrl="https://go.microsoft.com/fwlink/?linkid=2147240"
                   Category="General" />
 
-  <!-- TODO (tomescht): 
-       We should re-think this. This property is the relative path to the icon file _within the package_; setting it does not guarantee
-       that the corresponding file in the project is correctly copied into the package. A better alternative may be to expose a property
-       with the path to the file in the project instead, and update this one appropriately when that one changes.
-  -->
   <StringProperty Name="PackageIcon"
-                  DisplayName="Icon file"
-                  Description="The relative path from the package root to the icon file. In addition to setting this property you need to make sure that the file is included in the package. Image file size is limited to 1 MB. Supported file formats include JPEG and PNG. An image resolution of 128x128 is recommended."
+                  DisplayName="Icon"
+                  Description="The icon image for the package. Image file size is limited to 1 MB. Supported file formats include JPEG and PNG. An image resolution of 128x128 is recommended."
                   HelpUrl="https://go.microsoft.com/fwlink/?linkid=2147134"
-                  Category="General" />
+                  Category="General"
+                  Subtype="file">
+    <StringProperty.DataSource>
+      <DataSource Persistence="ProjectFileWithInterception"
+                  HasConfigurationCondition="False" />
+    </StringProperty.DataSource>
+  </StringProperty>
 
   <StringProperty Name="RepositoryUrl"
                   DisplayName="Repository URL"

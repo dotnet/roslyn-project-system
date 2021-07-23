@@ -128,13 +128,13 @@
         <note />
       </trans-unit>
       <trans-unit id="StringProperty|PackageIcon|Description">
-        <source>The relative path from the package root to the icon file. In addition to setting this property you need to make sure that the file is included in the package. Image file size is limited to 1 MB. Supported file formats include JPEG and PNG. An image resolution of 128x128 is recommended.</source>
-        <target state="translated">從套件根路徑到圖示檔案的相對路徑。除了設定此屬性之外，您還需要確認檔案已包含在套件中。影像檔大小限制為 1 MB。支援的檔案格式包括 JPEG 及 PNG。建議使用 128x128 的影像解析度。</target>
+        <source>The icon image for the package. Image file size is limited to 1 MB. Supported file formats include JPEG and PNG. An image resolution of 128x128 is recommended.</source>
+        <target state="needs-review-translation">從套件根路徑到圖示檔案的相對路徑。除了設定此屬性之外，您還需要確認檔案已包含在套件中。影像檔大小限制為 1 MB。支援的檔案格式包括 JPEG 及 PNG。建議使用 128x128 的影像解析度。</target>
         <note />
       </trans-unit>
       <trans-unit id="StringProperty|PackageIcon|DisplayName">
-        <source>Icon file</source>
-        <target state="translated">圖示檔案</target>
+        <source>Icon</source>
+        <target state="needs-review-translation">圖示檔案</target>
         <note />
       </trans-unit>
       <trans-unit id="StringProperty|PackageId|Description">
